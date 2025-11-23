@@ -51,7 +51,7 @@ export const INDEX_TOKENS = {
     { symbol: 'AR', name: 'Arweave', sector: 'Storage' },
     { symbol: 'ALGO', name: 'Algorand', sector: 'Layer 1' },
     { symbol: 'SEI', name: 'Sei', sector: 'Layer 1' },
-    { symbol: 'FTM', name: 'Fantom', sector: 'Layer 1' },
+    { symbol: 'AERO', name: 'Aerodrome', sector: 'DeFi' },
     { symbol: 'BONK', name: 'Bonk', sector: 'Meme' },
     { symbol: 'FLOW', name: 'Flow', sector: 'Layer 1' },
     { symbol: 'PYTH', name: 'Pyth Network', sector: 'Oracle' },
