@@ -7,6 +7,7 @@ import { PriceChart } from '@/components/PriceChart'
 import { TokenList } from '@/components/TokenList'
 import { HistoryChart } from '@/components/HistoryChart'
 import TopHoldingsSection from '@/components/TopHoldingsSection'
+import { RiskMetrics } from '@/components/RiskMetrics'
 import { RefreshCw, TrendingUp, TrendingDown, Database } from 'lucide-react'
 import { ThemeToggle } from '@/components/ThemeToggle'
 
@@ -227,6 +228,12 @@ export default function Home() {
       <div className="mb-8">
         <h2 className="text-xl font-semibold theme-text-secondary mb-4">Historical Performance</h2>
         <HistoryChart />
+      </div>
+
+      {/* Risk Analytics */}
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold theme-text-secondary mb-4">Risk Analytics</h2>
+        <RiskMetrics />
       </div>
 
       {/* Performance Comparison Table */}
