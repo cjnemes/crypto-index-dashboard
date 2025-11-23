@@ -10,8 +10,12 @@ services:
     environment:
       - CMC_API_KEY=${CMC_API_KEY}
       - DATABASE_URL=file:/app/data/crypto-index.db
+      - COLLECT_API_KEY=${COLLECT_API_KEY:-}
     volumes:
-      # Persist the database
+      # Persist the SQLite database across container restarts
+      # To migrate existing data, copy dev.db to the volume before starting:
+      #   docker volume create crypto-index-dashboard_crypto-data
+      #   docker run --rm -v crypto-index-dashboard_crypto-data:/data -v $(pwd)/prisma:/src alpine cp /src/dev.db /data/crypto-index.db
       - crypto-data:/app/data
     restart: unless-stopped
     healthcheck:
@@ -23,3 +27,6 @@ services:
 
 volumes:
   crypto-data:
+    # Named volume for database persistence
+    # Data survives container rebuilds and updates
+    # To backup: docker run --rm -v crypto-index-dashboard_crypto-data:/data -v $(pwd):/backup alpine cp /data/crypto-index.db /backup/
