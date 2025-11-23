@@ -4,6 +4,10 @@ import { prisma } from '@/lib/prisma'
 const CMC_API_KEY = process.env.CMC_API_KEY || ''
 const CMC_BASE_URL = 'https://pro-api.coinmarketcap.com/v2'
 
+// Rate limiting - allow 1 request per minute
+const RATE_LIMIT_WINDOW = 60 * 1000 // 1 minute
+let lastCollectionTime = 0
+
 // Index configuration - must match tokens.ts
 const INDEX_INCEPTION_DATE = '2024-11-25'
 const INDEX_BASE_VALUE = 1000
@@ -63,6 +67,16 @@ async function fetchPrices(symbols: string[]): Promise<Map<string, CMCQuote>> {
 export async function POST(request: Request) {
   const startTime = Date.now()
 
+  // Rate limiting - prevent abuse
+  const timeSinceLastCollection = startTime - lastCollectionTime
+  if (timeSinceLastCollection < RATE_LIMIT_WINDOW) {
+    const waitTime = Math.ceil((RATE_LIMIT_WINDOW - timeSinceLastCollection) / 1000)
+    return NextResponse.json(
+      { error: `Rate limited. Please wait ${waitTime} seconds.` },
+      { status: 429 }
+    )
+  }
+
   // API key protection - required in production
   const authHeader = request.headers.get('authorization')
   const expectedKey = process.env.COLLECT_API_KEY
@@ -76,6 +90,9 @@ export async function POST(request: Request) {
   if (!CMC_API_KEY) {
     return NextResponse.json({ error: 'CMC_API_KEY not configured' }, { status: 500 })
   }
+
+  // Update rate limit timestamp
+  lastCollectionTime = startTime
 
   try {
     // Get all active tokens

@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   crypto-dashboard:
     build:
@@ -11,11 +9,8 @@ services:
       - CMC_API_KEY=${CMC_API_KEY}
       - DATABASE_URL=file:/app/data/crypto-index.db
       - COLLECT_API_KEY=${COLLECT_API_KEY:-}
+      - NODE_ENV=production
     volumes:
-      # Persist the SQLite database across container restarts
-      # To migrate existing data, copy dev.db to the volume before starting:
-      #   docker volume create crypto-index-dashboard_crypto-data
-      #   docker run --rm -v crypto-index-dashboard_crypto-data:/data -v $(pwd)/prisma:/src alpine cp /src/dev.db /data/crypto-index.db
       - crypto-data:/app/data
     restart: unless-stopped
     healthcheck:
@@ -24,6 +19,22 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+
+  scheduler:
+    image: alpine:latest
+    depends_on:
+      crypto-dashboard:
+        condition: service_healthy
+    environment:
+      - COLLECT_API_KEY=${COLLECT_API_KEY:-}
+      - COLLECT_HOUR=${COLLECT_HOUR:-12}
+      - API_URL=http://crypto-dashboard:3000/api/collect
+      - BACKUP_DIR=/app/data/backups
+    volumes:
+      - crypto-data:/app/data
+      - ./scripts/scheduler.sh:/scheduler.sh:ro
+    command: ["/bin/sh", "-c", "apk add --no-cache curl && /bin/sh /scheduler.sh"]
+    restart: unless-stopped
 
 volumes:
   crypto-data:
