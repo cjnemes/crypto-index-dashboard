@@ -131,9 +131,9 @@ const CMC_IDS: Record<string, number> = {
   // Additional DeFi tokens
   'PENDLE': 9481,
   'JOE': 11396,
-  'PERP': 6950,
+  'AERO': 29270,
   'LQTY': 7429,
-  'INST': 10052,
+  'PHAR': 31969,
   'SPELL': 11289,
   // Additional Infra tokens
   'BAND': 4679,

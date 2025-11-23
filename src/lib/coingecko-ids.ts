@@ -120,9 +120,9 @@ export const COINGECKO_IDS: Record<string, string> = {
   // Additional DeFi tokens
   'PENDLE': 'pendle',
   'JOE': 'joe',
-  'PERP': 'perpetual-protocol',
+  'AERO': 'aerodrome-finance',
   'LQTY': 'liquity',
-  'INST': 'instadapp',
+  'PHAR': 'pharaoh-exchange',
   'SPELL': 'spell-token',
 
   // Additional Infra tokens

@@ -10,7 +10,7 @@ const INDEX_BASE_VALUE = 1000
 
 const INDEX_TOKENS: Record<string, string[]> = {
   N100: ['BNB', 'XRP', 'SOL', 'ADA', 'DOGE', 'TRX', 'TON', 'AVAX', 'SHIB', 'DOT', 'LINK', 'XMR', 'NEAR', 'SUI', 'APT', 'UNI', 'ICP', 'PEPE', 'FET', 'RENDER', 'ATOM', 'XLM', 'OKB', 'WIF', 'ONDO', 'IMX', 'STX', 'TAO', 'FIL', 'ARB', 'CRO', 'HBAR', 'MNT', 'OP', 'VET', 'INJ', 'MKR', 'AAVE', 'GRT', 'RUNE', 'THETA', 'AR', 'ALGO', 'SEI', 'FTM', 'BONK', 'FLOW', 'PYTH', 'TIA', 'EGLD', 'AXS', 'SAND', 'MANA', 'XTZ', 'EOS', 'SNX', 'GALA', 'LDO', 'NEO', 'KAVA', 'QNT', 'CFX', 'WLD', 'ASTR', 'BLUR', 'APE', 'DYDX', 'ROSE', 'CHZ', 'CRV', 'MINA', 'ZIL', 'ENJ', 'CAKE', 'IOTA', 'GMX', 'COMP', 'ZEC', '1INCH', 'ENS', 'RPL', 'OCEAN', 'LPT', 'ANKR', 'BAT', 'SKL', 'STORJ', 'CELO', 'YFI', 'BAL', 'SUSHI', 'HNT', 'KSM', 'IOTX', 'ONE', 'ZRX', 'ICX', 'AUDIO', 'API3', 'AKT'],
-  DEFI: ['UNI', 'AAVE', 'MKR', 'LDO', 'INJ', 'RUNE', 'SNX', 'CRV', 'DYDX', 'GMX', 'COMP', '1INCH', 'CAKE', 'RPL', 'YFI', 'BAL', 'SUSHI', 'ZRX', 'KAVA', 'PENDLE', 'JOE', 'PERP', 'LQTY', 'INST', 'SPELL'],
+  DEFI: ['UNI', 'AAVE', 'MKR', 'LDO', 'INJ', 'RUNE', 'SNX', 'CRV', 'DYDX', 'GMX', 'COMP', '1INCH', 'CAKE', 'RPL', 'YFI', 'BAL', 'SUSHI', 'ZRX', 'KAVA', 'PENDLE', 'JOE', 'AERO', 'LQTY', 'PHAR', 'SPELL'],
   INFRA: ['LINK', 'RENDER', 'GRT', 'FIL', 'AR', 'TAO', 'FET', 'THETA', 'PYTH', 'QNT', 'OCEAN', 'LPT', 'ANKR', 'ENS', 'STORJ', 'HNT', 'IOTX', 'API3', 'BAND', 'AKT', 'AUDIO', 'NKN', 'SC', 'GLM', 'FLUX']
 }
 

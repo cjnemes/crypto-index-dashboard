@@ -134,9 +134,9 @@ export const INDEX_TOKENS = {
     { symbol: 'KAVA', name: 'Kava', sector: 'Lending' },
     { symbol: 'PENDLE', name: 'Pendle', sector: 'Yield' },
     { symbol: 'JOE', name: 'Trader Joe', sector: 'DEX' },
-    { symbol: 'PERP', name: 'Perpetual Protocol', sector: 'Derivatives' },
+    { symbol: 'AERO', name: 'Aerodrome', sector: 'DEX' },
     { symbol: 'LQTY', name: 'Liquity', sector: 'Stablecoin' },
-    { symbol: 'INST', name: 'Instadapp', sector: 'Aggregator' },
+    { symbol: 'PHAR', name: 'Pharaoh', sector: 'DEX' },
     { symbol: 'SPELL', name: 'Spell Token', sector: 'Lending' },
   ],
 
