@@ -42,15 +42,15 @@ export function HistoryChart({ className = '' }: HistoryChartProps) {
     fetchHistory()
   }, [period])
 
-  // Transform data for recharts - normalize to percentage change (rebased to 100)
+  // Transform data for recharts - show percentage change from period start
+  // This allows comparing assets on different scales (BTC at 85k vs indexes at 700)
   const chartData = (() => {
     if (data.length === 0) return []
 
-    // Get starting values for each index (first data point)
+    // Get starting values for each index (first data point in period)
     const startingValues: Record<string, number> = {}
     data.forEach(index => {
       if (index.history.length > 0) {
-        // Sort by timestamp and get first value
         const sorted = [...index.history].sort((a, b) =>
           new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
         )
@@ -64,7 +64,7 @@ export function HistoryChart({ className = '' }: HistoryChartProps) {
       index.history.forEach(h => timestamps.add(h.timestamp))
     })
 
-    // Create normalized data points (rebased to 100)
+    // Create data points with percentage change from period start
     return Array.from(timestamps).sort().map(ts => {
       const point: Record<string, any> = {
         timestamp: new Date(ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
@@ -72,10 +72,9 @@ export function HistoryChart({ className = '' }: HistoryChartProps) {
       data.forEach(index => {
         const historyPoint = index.history.find(h => h.timestamp === ts)
         if (historyPoint && startingValues[index.indexName]) {
-          // Normalize: (current / starting) * 100 = rebased value
-          // So starting point = 100, and changes show relative performance
-          const normalizedValue = (historyPoint.value / startingValues[index.indexName]) * 100
-          point[index.indexName] = normalizedValue
+          // Calculate percentage change from period start
+          const percentChange = ((historyPoint.value - startingValues[index.indexName]) / startingValues[index.indexName]) * 100
+          point[index.indexName] = percentChange
         }
       })
       return point
@@ -87,16 +86,17 @@ export function HistoryChart({ className = '' }: HistoryChartProps) {
       return (
         <div className="bg-gray-800 border border-gray-600 rounded-lg p-3 shadow-lg">
           <p className="text-gray-400 text-sm mb-2">{label}</p>
-          {payload.map((entry: any, index: number) => (
-            <div key={index} className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.color }} />
-              <span className="text-white text-sm">
-                {entry.name}: {typeof entry.value === 'number'
-                  ? `${(entry.value - 100).toFixed(2)}%`
-                  : entry.value}
-              </span>
-            </div>
-          ))}
+          {payload.map((entry: any, index: number) => {
+            const isPositive = entry.value >= 0
+            return (
+              <div key={index} className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.color }} />
+                <span className={`text-sm ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
+                  {entry.name}: {isPositive ? '+' : ''}{entry.value.toFixed(2)}%
+                </span>
+              </div>
+            )
+          })}
         </div>
       )
     }
@@ -162,8 +162,8 @@ export function HistoryChart({ className = '' }: HistoryChartProps) {
             />
             <YAxis
               tick={{ fill: '#9CA3AF', fontSize: 12 }}
-              tickFormatter={(value) => `${(value - 100).toFixed(0)}%`}
-              domain={['dataMin - 5', 'dataMax + 5']}
+              tickFormatter={(value) => `${value >= 0 ? '+' : ''}${value.toFixed(0)}%`}
+              domain={['auto', 'auto']}
             />
             <Tooltip content={<CustomTooltip />} />
             <Legend />
