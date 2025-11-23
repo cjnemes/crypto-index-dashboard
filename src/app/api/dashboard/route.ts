@@ -1,19 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-// Verified baseline returns from CMC API (November 2025)
-// These are used until we have enough historical data collected
-const BASELINE_RETURNS: Record<string, { '24H': number; '1M': number; '3M': number; '6M': number; '1Y': number }> = {
-  'BTC': { '24H': 0, '1M': -21.6, '3M': -27.8, '6M': -24.5, '1Y': -14.8 },
-  'ETH': { '24H': 0, '1M': -27.9, '3M': -43.2, '6M': 3.0, '1Y': -17.6 },
-  'N100-MCW': { '24H': 0, '1M': -18.4, '3M': -32.6, '6M': -12.8, '1Y': 8.6 },
-  'N100-EW': { '24H': 0, '1M': -28.4, '3M': -48.2, '6M': -32.6, '1Y': -28.6 },
-  'DEFI-MCW': { '24H': 0, '1M': -26.4, '3M': -48.2, '6M': -32.4, '1Y': -18.4 },
-  'DEFI-EW': { '24H': 0, '1M': -32.4, '3M': -52.6, '6M': -38.4, '1Y': -24.6 },
-  'INFRA-MCW': { '24H': 0, '1M': -30.0, '3M': -55.0, '6M': -28.1, '1Y': -38.4 },
-  'INFRA-EW': { '24H': 0, '1M': -38.4, '3M': -62.4, '6M': -42.6, '1Y': -48.6 },
-}
-
 // GET /api/dashboard - Get latest data for dashboard display
 export async function GET() {
   try {
@@ -35,10 +22,13 @@ export async function GET() {
           orderBy: { timestamp: 'desc' }
         })
 
-        // Get baseline returns for this index
-        const baseline = BASELINE_RETURNS[config.symbol] || { '24H': 0, '1M': 0, '3M': 0, '6M': 0, '1Y': 0 }
+        // Get earliest snapshot (inception) as fallback for return calculations
+        const earliest = await prisma.indexSnapshot.findFirst({
+          where: { indexName: config.symbol },
+          orderBy: { timestamp: 'asc' }
+        })
 
-        let returns = { ...baseline }
+        let returns = { '24H': 0, '1M': 0, '3M': 0, '6M': 0, '1Y': 0 }
 
         if (latest) {
           // Calculate returns from historical data
@@ -73,14 +63,20 @@ export async function GET() {
             })
           ])
 
-          // Use calculated returns if we have the data, otherwise use baseline
-          // For 24H, compare against previous snapshot (works for daily data)
+          // Helper to calculate return percentage
+          const calcReturn = (oldValue: number | undefined | null): number => {
+            if (!oldValue || oldValue === 0) return 0
+            return ((latest.value - oldValue) / oldValue) * 100
+          }
+
+          // Use period-specific snapshot if available, otherwise fall back to earliest (inception)
+          // This ensures we always calculate from real data, not hardcoded baselines
           returns = {
-            '24H': previousSnapshot ? ((latest.value - previousSnapshot.value) / previousSnapshot.value) * 100 : (latest.returns1d ?? baseline['24H']),
-            '1M': monthOld ? ((latest.value - monthOld.value) / monthOld.value) * 100 : baseline['1M'],
-            '3M': threeMonthOld ? ((latest.value - threeMonthOld.value) / threeMonthOld.value) * 100 : baseline['3M'],
-            '6M': sixMonthOld ? ((latest.value - sixMonthOld.value) / sixMonthOld.value) * 100 : baseline['6M'],
-            '1Y': yearOld ? ((latest.value - yearOld.value) / yearOld.value) * 100 : baseline['1Y']
+            '24H': calcReturn(previousSnapshot?.value ?? earliest?.value),
+            '1M': calcReturn(monthOld?.value ?? earliest?.value),
+            '3M': calcReturn(threeMonthOld?.value ?? earliest?.value),
+            '6M': calcReturn(sixMonthOld?.value ?? earliest?.value),
+            '1Y': calcReturn(yearOld?.value ?? earliest?.value)
           }
         }
 
