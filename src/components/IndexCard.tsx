@@ -6,6 +6,7 @@ import { TrendingUp, TrendingDown, ChevronRight } from 'lucide-react'
 interface IndexData {
   symbol: string
   name: string
+  currentValue?: number
   returns: {
     '24H': number
     '1M': number
@@ -26,13 +27,24 @@ export function IndexCard({ data, isBenchmark = false }: IndexCardProps) {
   const change24h = data.returns['24H']
   const isPositive = change24h >= 0
 
+  // Format value: benchmarks show as currency, indexes show as index value
+  const formatValue = (value: number | undefined) => {
+    if (value === undefined) return null
+    if (isBenchmark) {
+      return value >= 1000
+        ? `$${value.toLocaleString('en-US', { maximumFractionDigits: 0 })}`
+        : `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    }
+    return value.toFixed(2)
+  }
+
   return (
     <Link href={`/index/${encodeURIComponent(data.symbol)}`}>
       <div
         className={`bg-gray-800 rounded-xl p-5 border-l-4 hover:bg-gray-700 transition-colors cursor-pointer group`}
         style={{ borderLeftColor: data.color }}
       >
-      <div className="flex justify-between items-start mb-3">
+      <div className="flex justify-between items-start mb-2">
         <div>
           <h3 className="text-lg font-semibold text-white">{data.name}</h3>
           <p className="text-sm text-gray-400">{data.symbol}</p>
@@ -48,6 +60,18 @@ export function IndexCard({ data, isBenchmark = false }: IndexCardProps) {
           </span>
         )}
       </div>
+
+      {/* Current Value */}
+      {data.currentValue !== undefined && (
+        <div className="mb-3">
+          <span className="text-2xl font-bold text-white">
+            {formatValue(data.currentValue)}
+          </span>
+          {!isBenchmark && (
+            <span className="text-xs text-gray-500 ml-2">Index Value</span>
+          )}
+        </div>
+      )}
 
       <div className="flex items-center gap-2 mb-4">
         {isPositive ? (

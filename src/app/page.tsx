@@ -41,6 +41,7 @@ const fallbackTokens = [
 interface IndexData {
   symbol: string
   name: string
+  currentValue?: number
   returns: { '24H': number; '1M': number; '3M': number; '6M': number; '1Y': number }
   color: string
   components?: number
@@ -74,6 +75,7 @@ export default function Home() {
         const transformedBenchmarks = data.benchmarks.map((b: any) => ({
           symbol: b.symbol,
           name: b.name,
+          currentValue: b.currentValue,
           returns: b.returns,
           color: b.color
         }))
@@ -85,6 +87,7 @@ export default function Home() {
         const transformedIndexes = data.indexes.map((i: any) => ({
           symbol: i.symbol,
           name: i.name,
+          currentValue: i.currentValue,
           returns: i.returns,
           color: i.color,
           components: i.tokenCount
