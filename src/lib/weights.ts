@@ -2,7 +2,7 @@
  * Weight calculation utilities for index constituents
  */
 
-import { INDEX_TOKENS, INDEX_CONFIGS } from './tokens'
+import { INDEX_CONFIGS, getIndexTokens as getTokensForIndex } from './tokens'
 
 export interface ConstituentWithWeight {
   symbol: string
@@ -28,27 +28,13 @@ export interface IndexDetails {
 }
 
 /**
- * Get the base index key for an index symbol
- * N100-MCW -> N100, DEFI-EW -> DEFI, etc.
- */
-export function getBaseIndexKey(indexSymbol: string): keyof typeof INDEX_TOKENS | null {
-  const config = INDEX_CONFIGS.find(c => c.symbol === indexSymbol)
-  if (!config) return null
-
-  const baseIndex = config.baseIndex
-  if (baseIndex === 'N100' || baseIndex === 'DEFI' || baseIndex === 'INFRA') {
-    return baseIndex
-  }
-  return null
-}
-
-/**
  * Get tokens for a given index symbol
+ * Uses the centralized getIndexTokens from tokens.ts which supports all indexes
  */
-export function getIndexTokens(indexSymbol: string): typeof INDEX_TOKENS.N100 {
-  const baseKey = getBaseIndexKey(indexSymbol)
-  if (!baseKey) return []
-  return INDEX_TOKENS[baseKey]
+export function getIndexTokens(indexSymbol: string): { symbol: string; name: string; sector: string }[] {
+  const config = INDEX_CONFIGS.find(c => c.symbol === indexSymbol)
+  if (!config) return []
+  return getTokensForIndex(config.baseIndex)
 }
 
 /**
