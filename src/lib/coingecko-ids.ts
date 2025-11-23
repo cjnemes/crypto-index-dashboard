@@ -2,32 +2,39 @@
 // CoinGecko uses slugs (lowercase hyphenated names) as IDs
 
 export const COINGECKO_IDS: Record<string, string> = {
-  // Top 25 (from N100)
+  // Benchmarks (BTC, ETH kept for reference)
   'BTC': 'bitcoin',
   'ETH': 'ethereum',
+  'BCH': 'bitcoin-cash',
+  'LTC': 'litecoin',
+  'ETC': 'ethereum-classic',
+
+  // N100 tokens (excluding benchmarks)
   'BNB': 'binancecoin',
   'XRP': 'ripple',
   'SOL': 'solana',
   'ADA': 'cardano',
   'DOGE': 'dogecoin',
   'TRX': 'tron',
+  'TON': 'the-open-network',
   'AVAX': 'avalanche-2',
   'SHIB': 'shiba-inu',
   'DOT': 'polkadot',
   'LINK': 'chainlink',
-  'BCH': 'bitcoin-cash',
+  'XMR': 'monero',
   'NEAR': 'near',
   'SUI': 'sui',
-  'LTC': 'litecoin',
   'APT': 'aptos',
   'UNI': 'uniswap',
   'ICP': 'internet-computer',
   'PEPE': 'pepe',
   'FET': 'fetch-ai',
-  'ETC': 'ethereum-classic',
   'RENDER': 'render-token',
   'ATOM': 'cosmos',
   'XLM': 'stellar',
+  'OKB': 'okb',
+  'WIF': 'dogwifcoin',
+  'ONDO': 'ondo-finance',
 
   // 26-50
   'IMX': 'immutable-x',

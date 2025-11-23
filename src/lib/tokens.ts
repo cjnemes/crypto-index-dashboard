@@ -2,34 +2,35 @@
 // Full list of tokens for accurate index calculations
 
 export const INDEX_TOKENS = {
-  // Nemes 100 - Top 100 cryptocurrencies by market cap (excluding stablecoins)
+  // Nemes 100 - Top 100 cryptocurrencies by market cap
+  // EXCLUDES: BTC, ETH, Bitcoin forks (BCH, LTC), and ETC (benchmarks only)
   N100: [
-    // Top 25
-    { symbol: 'BTC', name: 'Bitcoin', sector: 'Layer 1' },
-    { symbol: 'ETH', name: 'Ethereum', sector: 'Layer 1' },
+    // Top 25 (excluding benchmarks)
     { symbol: 'BNB', name: 'BNB', sector: 'Exchange' },
     { symbol: 'XRP', name: 'XRP', sector: 'Payments' },
     { symbol: 'SOL', name: 'Solana', sector: 'Layer 1' },
     { symbol: 'ADA', name: 'Cardano', sector: 'Layer 1' },
     { symbol: 'DOGE', name: 'Dogecoin', sector: 'Meme' },
     { symbol: 'TRX', name: 'TRON', sector: 'Layer 1' },
+    { symbol: 'TON', name: 'Toncoin', sector: 'Layer 1' },
     { symbol: 'AVAX', name: 'Avalanche', sector: 'Layer 1' },
     { symbol: 'SHIB', name: 'Shiba Inu', sector: 'Meme' },
     { symbol: 'DOT', name: 'Polkadot', sector: 'Layer 0' },
     { symbol: 'LINK', name: 'Chainlink', sector: 'Oracle' },
-    { symbol: 'BCH', name: 'Bitcoin Cash', sector: 'Payments' },
+    { symbol: 'XMR', name: 'Monero', sector: 'Privacy' },
     { symbol: 'NEAR', name: 'NEAR Protocol', sector: 'Layer 1' },
     { symbol: 'SUI', name: 'Sui', sector: 'Layer 1' },
-    { symbol: 'LTC', name: 'Litecoin', sector: 'Payments' },
     { symbol: 'APT', name: 'Aptos', sector: 'Layer 1' },
     { symbol: 'UNI', name: 'Uniswap', sector: 'DeFi' },
     { symbol: 'ICP', name: 'Internet Computer', sector: 'Layer 1' },
     { symbol: 'PEPE', name: 'Pepe', sector: 'Meme' },
     { symbol: 'FET', name: 'Fetch.ai', sector: 'AI' },
-    { symbol: 'ETC', name: 'Ethereum Classic', sector: 'Layer 1' },
     { symbol: 'RENDER', name: 'Render', sector: 'GPU' },
     { symbol: 'ATOM', name: 'Cosmos', sector: 'Layer 0' },
     { symbol: 'XLM', name: 'Stellar', sector: 'Payments' },
+    { symbol: 'OKB', name: 'OKB', sector: 'Exchange' },
+    { symbol: 'WIF', name: 'dogwifhat', sector: 'Meme' },
+    { symbol: 'ONDO', name: 'Ondo', sector: 'DeFi' },
     // 26-50
     { symbol: 'IMX', name: 'Immutable', sector: 'Gaming' },
     { symbol: 'STX', name: 'Stacks', sector: 'Layer 2' },
