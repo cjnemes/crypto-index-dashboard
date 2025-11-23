@@ -1,35 +1,175 @@
 /**
- * Historical Data Backfill Script using CoinGecko API
+ * Historical Data Backfill Script using CoinMarketCap API
  *
- * Fetches 2 years of daily price data for all tokens in our indexes
- * CoinGecko free tier: 10-50 calls/minute, up to 365 days per request
+ * Fetches 12 months of daily price data for all tokens in our indexes
+ * Uses CMC paid plan with historical data access
  *
- * Usage: npm run backfill-coingecko
+ * Usage: npm run backfill-cmc
  */
 
 import { PrismaClient } from '@prisma/client'
-import { COINGECKO_IDS, getCoinGeckoId } from '../src/lib/coingecko-ids'
 import { INDEX_TOKENS, INDEX_CONFIGS } from '../src/lib/tokens'
 
 const prisma = new PrismaClient()
 
-// CoinGecko API configuration
-const CG_BASE_URL = 'https://api.coingecko.com/api/v3'
-const RATE_LIMIT_DELAY = 2000 // 2 seconds between requests (safe for free tier)
-const DAYS_PER_REQUEST = 365 // CoinGecko returns daily data for >90 days
-const DAYS_TO_BACKFILL = 365 // 1 year of historical data
+// CMC API configuration
+const CMC_BASE_URL = 'https://pro-api.coinmarketcap.com'
+const CMC_API_KEY = process.env.CMC_API_KEY || ''
+const RATE_LIMIT_DELAY = 2500 // 2.5 seconds between requests (24 calls/min, safe for rate limits)
 
-interface CoinGeckoMarketChart {
-  prices: [number, number][] // [timestamp, price]
-  market_caps: [number, number][] // [timestamp, market_cap]
-  total_volumes: [number, number][] // [timestamp, volume]
+// CMC ID mappings - use specific IDs to avoid symbol collisions
+// IDs obtained from CMC cryptocurrency/map endpoint
+const CMC_IDS: Record<string, number> = {
+  // Benchmarks
+  'BTC': 1,
+  'ETH': 1027,
+  'BCH': 1831,
+  'LTC': 2,
+  'ETC': 1321,
+
+  // N100 tokens
+  'BNB': 1839,
+  'XRP': 52,
+  'SOL': 5426,
+  'ADA': 2010,
+  'DOGE': 74,
+  'TRX': 1958,
+  'TON': 11419,
+  'AVAX': 5805,
+  'SHIB': 5994,
+  'DOT': 6636,
+  'LINK': 1975,
+  'XMR': 328,
+  'NEAR': 6535,
+  'SUI': 20947,
+  'APT': 21794,
+  'UNI': 7083,
+  'ICP': 8916,
+  'PEPE': 24478,
+  'FET': 3773,
+  'RENDER': 5690,
+  'ATOM': 3794,
+  'XLM': 512,
+  'OKB': 3897,
+  'WIF': 28752,
+  'ONDO': 21159,
+  'IMX': 10603,
+  'STX': 4847,
+  'TAO': 22974,
+  'FIL': 2280,
+  'ARB': 11841,
+  'CRO': 3635,
+  'HBAR': 4642,
+  'MNT': 27075,
+  'OP': 11840,
+  'VET': 3077,
+  'INJ': 7226,
+  'MKR': 1518,
+  'AAVE': 7278,
+  'GRT': 6719,
+  'RUNE': 4157,
+  'THETA': 2416,
+  'AR': 5632,
+  'ALGO': 4030,
+  'SEI': 23149,
+  'FTM': 3513,
+  'BONK': 23095,
+  'FLOW': 4558,
+  'PYTH': 28177,
+  'TIA': 22861,
+  'EGLD': 6892,
+  'AXS': 6783,
+  'SAND': 6210,
+  'MANA': 1966,
+  'XTZ': 2011,
+  'EOS': 1765,
+  'SNX': 2586,
+  'GALA': 7080,
+  'LDO': 8000,
+  'NEO': 1376,
+  'KAVA': 4846,
+  'QNT': 3155,
+  'CFX': 7334,
+  'WLD': 13502,
+  'ASTR': 12885,
+  'BLUR': 23121,
+  'APE': 18876,
+  'DYDX': 28324,
+  'ROSE': 7653,
+  'CHZ': 4066,
+  'CRV': 6538,
+  'MINA': 8646,
+  'ZIL': 2469,
+  'ENJ': 2130,
+  'CAKE': 7186,
+  'IOTA': 1720,
+  'GMX': 11857,
+  'COMP': 5692,
+  'ZEC': 1437,
+  '1INCH': 8104,
+  'ENS': 13855,
+  'RPL': 2943,
+  'OCEAN': 3911,
+  'LPT': 3640,
+  'ANKR': 3783,
+  'BAT': 1697,
+  'SKL': 5691,
+  'STORJ': 1772,
+  'CELO': 5567,
+  'YFI': 5864,
+  'BAL': 5728,
+  'SUSHI': 6758,
+  'HNT': 5665,
+  'KSM': 5034,
+  'IOTX': 2777,
+  'ONE': 3945,
+  'ZRX': 1896,
+  'ICX': 2099,
+  'AUDIO': 7455,
+  'API3': 7737,
+  'AKT': 7431,
+  // Additional DeFi tokens
+  'PENDLE': 9481,
+  'JOE': 11396,
+  'PERP': 6950,
+  'LQTY': 7429,
+  'INST': 10052,
+  'SPELL': 11289,
+  // Additional Infra tokens
+  'BAND': 4679,
+  'NKN': 2780,
+  'SC': 1042,
+  'GLM': 1455,
+  'FLUX': 3029,
 }
 
-interface DailyPrice {
-  timestamp: Date
-  price: number
-  marketCap: number
-  volume: number
+interface CMCQuote {
+  timestamp: string
+  quote: {
+    USD: {
+      price: number
+      market_cap: number
+      volume_24h: number
+      percent_change_24h: number
+      percent_change_7d: number
+      percent_change_30d: number
+    }
+  }
+}
+
+interface CMCHistoricalResponse {
+  status: {
+    error_code: number
+    error_message: string | null
+  }
+  data: {
+    [symbol: string]: Array<{
+      id: number
+      name: string
+      symbol: string
+      quotes: CMCQuote[]
+    }>
+  }
 }
 
 // Sleep utility
@@ -37,88 +177,59 @@ function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-// Fetch historical data for a single coin (in chunks to avoid auth requirements)
-async function fetchCoinHistory(coinId: string, totalDays: number): Promise<CoinGeckoMarketChart | null> {
-  const allPrices: [number, number][] = []
-  const allMarketCaps: [number, number][] = []
-  const allVolumes: [number, number][] = []
+// Fetch historical data for a single coin
+async function fetchCoinHistory(
+  symbol: string,
+  cmcId: number,
+  startDate: string,
+  endDate: string
+): Promise<CMCQuote[] | null> {
+  try {
+    const url = `${CMC_BASE_URL}/v2/cryptocurrency/quotes/historical?id=${cmcId}&time_start=${startDate}&time_end=${endDate}&interval=daily`
 
-  // Fetch in chunks of DAYS_PER_REQUEST
-  const numChunks = Math.ceil(totalDays / DAYS_PER_REQUEST)
-
-  for (let chunk = 0; chunk < numChunks; chunk++) {
-    const daysForChunk = Math.min(DAYS_PER_REQUEST, totalDays - (chunk * DAYS_PER_REQUEST))
-    const startDaysAgo = totalDays - (chunk * DAYS_PER_REQUEST)
-
-    // CoinGecko returns daily data for requests > 90 days
-    // No need for chunking with 365-day requests
-
-    try {
-      const url = `${CG_BASE_URL}/coins/${coinId}/market_chart?vs_currency=usd&days=${daysForChunk}`
-      const response = await fetch(url)
-
-      if (!response.ok) {
-        if (response.status === 429) {
-          console.log(`  Rate limited, waiting 60 seconds...`)
-          await sleep(60000)
-          chunk-- // Retry this chunk
-          continue
-        }
-        console.error(`  Failed to fetch ${coinId}: ${response.status}`)
-        return null
+    const response = await fetch(url, {
+      headers: {
+        'X-CMC_PRO_API_KEY': CMC_API_KEY,
+        'Accept': 'application/json'
       }
+    })
 
-      const data: CoinGeckoMarketChart = await response.json()
-
-      if (data.prices) allPrices.push(...data.prices)
-      if (data.market_caps) allMarketCaps.push(...data.market_caps)
-      if (data.total_volumes) allVolumes.push(...data.total_volumes)
-
-      if (chunk < numChunks - 1) {
-        await sleep(RATE_LIMIT_DELAY)
-      }
-    } catch (error) {
-      console.error(`  Error fetching ${coinId}:`, error)
+    if (!response.ok) {
+      console.error(`  HTTP error ${response.status} for ${symbol}`)
       return null
     }
+
+    const data = await response.json()
+
+    if (data.status?.error_code !== 0) {
+      console.error(`  API error for ${symbol}: ${data.status?.error_message}`)
+      return null
+    }
+
+    // When querying by ID, response is data.quotes[] directly
+    const quotes = data.data?.quotes
+    if (!quotes || quotes.length === 0) {
+      console.error(`  No data returned for ${symbol} (ID: ${cmcId})`)
+      return null
+    }
+
+    return quotes
+  } catch (error) {
+    console.error(`  Error fetching ${symbol}:`, error)
+    return null
   }
-
-  if (allPrices.length === 0) return null
-
-  return {
-    prices: allPrices,
-    market_caps: allMarketCaps,
-    total_volumes: allVolumes
-  }
-}
-
-// Process market chart data into daily prices
-function processDailyPrices(data: CoinGeckoMarketChart): DailyPrice[] {
-  const dailyPrices: DailyPrice[] = []
-
-  for (let i = 0; i < data.prices.length; i++) {
-    const [timestamp, price] = data.prices[i]
-    const marketCap = data.market_caps[i]?.[1] || 0
-    const volume = data.total_volumes[i]?.[1] || 0
-
-    // Normalize to noon UTC
-    const date = new Date(timestamp)
-    date.setUTCHours(12, 0, 0, 0)
-
-    dailyPrices.push({
-      timestamp: date,
-      price,
-      marketCap,
-      volume
-    })
-  }
-
-  return dailyPrices
 }
 
 // Get all unique tokens across all indexes
 function getAllTokens(): { symbol: string, name: string }[] {
   const tokenMap = new Map<string, string>()
+
+  // Add benchmarks
+  tokenMap.set('BTC', 'Bitcoin')
+  tokenMap.set('ETH', 'Ethereum')
+  tokenMap.set('BCH', 'Bitcoin Cash')
+  tokenMap.set('LTC', 'Litecoin')
+  tokenMap.set('ETC', 'Ethereum Classic')
 
   for (const token of INDEX_TOKENS.N100) {
     tokenMap.set(token.symbol, token.name)
@@ -164,7 +275,6 @@ async function calculateIndexValues(date: Date): Promise<Map<string, number>> {
 
       if (indexConfig.methodology === 'EW') {
         // Equal Weight: average of all token prices normalized
-        // We'll calculate % change from first day
         let sum = 0
         let count = 0
         for (const token of indexTokens) {
@@ -174,7 +284,6 @@ async function calculateIndexValues(date: Date): Promise<Map<string, number>> {
             count++
           }
         }
-        // Store raw sum for now, will normalize later
         if (count > 0) {
           indexValues.set(indexConfig.symbol, sum / count)
         }
@@ -209,72 +318,90 @@ async function calculateIndexValues(date: Date): Promise<Map<string, number>> {
 
 async function main() {
   console.log('=' .repeat(60))
-  console.log('CoinGecko Historical Data Backfill')
+  console.log('CoinMarketCap Historical Data Backfill')
   console.log('=' .repeat(60))
-  console.log(`Fetching ${DAYS_TO_BACKFILL} days of historical data`)
+
+  if (!CMC_API_KEY) {
+    console.error('ERROR: CMC_API_KEY not set in environment')
+    process.exit(1)
+  }
+
+  // Calculate date range (12 months back from today)
+  const endDate = new Date()
+  const startDate = new Date()
+  startDate.setMonth(startDate.getMonth() - 12)
+  startDate.setDate(startDate.getDate() + 1) // Start 1 day after to stay within 12 months
+
+  const startStr = startDate.toISOString().split('T')[0]
+  const endStr = endDate.toISOString().split('T')[0]
+
+  console.log(`Date range: ${startStr} to ${endStr}`)
   console.log('')
 
   try {
     const allTokens = getAllTokens()
-    const tokensWithCGId = allTokens.filter(t => getCoinGeckoId(t.symbol))
-    const tokensWithoutCGId = allTokens.filter(t => !getCoinGeckoId(t.symbol))
+    const tokensWithCMCId = allTokens.filter(t => CMC_IDS[t.symbol])
+    const tokensWithoutCMCId = allTokens.filter(t => !CMC_IDS[t.symbol])
 
     console.log(`Total tokens: ${allTokens.length}`)
-    console.log(`Tokens with CoinGecko ID: ${tokensWithCGId.length}`)
-    console.log(`Tokens without CoinGecko ID: ${tokensWithoutCGId.length}`)
+    console.log(`Tokens with CMC ID: ${tokensWithCMCId.length}`)
+    console.log(`Tokens without CMC ID: ${tokensWithoutCMCId.length}`)
 
-    if (tokensWithoutCGId.length > 0) {
-      console.log('\nMissing CoinGecko IDs for:')
-      tokensWithoutCGId.forEach(t => console.log(`  - ${t.symbol} (${t.name})`))
+    if (tokensWithoutCMCId.length > 0) {
+      console.log('\nMissing CMC IDs for:')
+      tokensWithoutCMCId.forEach(t => console.log(`  - ${t.symbol} (${t.name})`))
     }
 
     console.log('\n' + '-'.repeat(60))
-    console.log('Phase 1: Fetching price history from CoinGecko')
+    console.log('Phase 1: Fetching price history from CoinMarketCap')
     console.log('-'.repeat(60))
 
     let processed = 0
     let failed = 0
     const allDates = new Set<string>()
 
-    for (const token of tokensWithCGId) {
-      const coinId = getCoinGeckoId(token.symbol)!
+    for (const token of tokensWithCMCId) {
+      const cmcId = CMC_IDS[token.symbol]
       processed++
 
-      console.log(`[${processed}/${tokensWithCGId.length}] Fetching ${token.symbol} (${coinId})...`)
+      console.log(`[${processed}/${tokensWithCMCId.length}] Fetching ${token.symbol} (ID: ${cmcId})...`)
 
-      // Check if we already have recent data for this token
+      // Check if we already have data for this token
       const existingCount = await prisma.price.count({
         where: { symbol: token.symbol }
       })
 
-      if (existingCount > DAYS_TO_BACKFILL - 30) {
+      if (existingCount > 300) {
         console.log(`  Already have ${existingCount} records, skipping...`)
         continue
       }
 
-      const data = await fetchCoinHistory(coinId, DAYS_TO_BACKFILL)
+      const quotes = await fetchCoinHistory(token.symbol, cmcId, startStr, endStr)
 
-      if (!data) {
+      if (!quotes || quotes.length === 0) {
         failed++
         continue
       }
 
-      const dailyPrices = processDailyPrices(data)
-      console.log(`  Got ${dailyPrices.length} daily prices`)
+      console.log(`  Got ${quotes.length} daily quotes`)
 
       // Store prices
       let stored = 0
-      for (const dp of dailyPrices) {
-        // Check if price already exists for this date
-        const dateStr = dp.timestamp.toISOString().split('T')[0]
+      for (const quote of quotes) {
+        const timestamp = new Date(quote.timestamp)
+        timestamp.setUTCHours(12, 0, 0, 0) // Normalize to noon UTC
+        const dateStr = timestamp.toISOString().split('T')[0]
         allDates.add(dateStr)
 
+        const usd = quote.quote.USD
+
+        // Check if price already exists for this date
         const existing = await prisma.price.findFirst({
           where: {
             symbol: token.symbol,
             timestamp: {
-              gte: new Date(dp.timestamp.getTime() - 12 * 60 * 60 * 1000),
-              lte: new Date(dp.timestamp.getTime() + 12 * 60 * 60 * 1000)
+              gte: new Date(timestamp.getTime() - 12 * 60 * 60 * 1000),
+              lte: new Date(timestamp.getTime() + 12 * 60 * 60 * 1000)
             }
           }
         })
@@ -284,13 +411,13 @@ async function main() {
             data: {
               symbol: token.symbol,
               name: token.name,
-              price: dp.price,
-              marketCap: dp.marketCap,
-              volume24h: dp.volume,
-              change24h: 0, // Will calculate later
-              change7d: 0,
-              change30d: 0,
-              timestamp: dp.timestamp
+              price: usd.price,
+              marketCap: usd.market_cap,
+              volume24h: usd.volume_24h,
+              change24h: usd.percent_change_24h || 0,
+              change7d: usd.percent_change_7d || 0,
+              change30d: usd.percent_change_30d || 0,
+              timestamp
             }
           })
           stored++
@@ -310,6 +437,11 @@ async function main() {
     // Get all unique dates from prices
     const sortedDates = Array.from(allDates).sort()
     console.log(`Processing ${sortedDates.length} unique dates`)
+
+    if (sortedDates.length === 0) {
+      console.log('No dates to process')
+      return
+    }
 
     // Get baseline values (first date) for normalization
     const firstDate = new Date(sortedDates[0])
@@ -374,7 +506,7 @@ async function main() {
     await prisma.collectionLog.create({
       data: {
         status: 'success',
-        tokensCount: tokensWithCGId.length - failed,
+        tokensCount: tokensWithCMCId.length - failed,
         duration: 0
       }
     })
@@ -386,7 +518,7 @@ async function main() {
     console.log('\n' + '='.repeat(60))
     console.log('Backfill Complete!')
     console.log('='.repeat(60))
-    console.log(`Tokens processed: ${processed - failed}/${tokensWithCGId.length}`)
+    console.log(`Tokens processed: ${processed - failed}/${tokensWithCMCId.length}`)
     console.log(`Total price records: ${totalPrices}`)
     console.log(`Total index snapshots: ${totalSnapshots}`)
     console.log(`Date range: ${sortedDates[0]} to ${sortedDates[sortedDates.length - 1]}`)

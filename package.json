@@ -13,7 +13,8 @@
     "db:studio": "prisma studio",
     "collect-prices": "tsx scripts/collect-prices.ts",
     "backfill-history": "tsx scripts/backfill-history.ts",
-    "backfill-coingecko": "tsx scripts/backfill-coingecko.ts"
+    "backfill-coingecko": "tsx scripts/backfill-coingecko.ts",
+    "backfill-cmc": "tsx scripts/backfill-cmc.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
