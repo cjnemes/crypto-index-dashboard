@@ -126,7 +126,6 @@ export const INDEX_TOKENS = {
     { symbol: 'COMP', name: 'Compound', sector: 'Lending' },
     { symbol: '1INCH', name: '1inch', sector: 'Aggregator' },
     { symbol: 'CAKE', name: 'PancakeSwap', sector: 'DEX' },
-    { symbol: 'RPL', name: 'Rocket Pool', sector: 'Staking' },
     { symbol: 'YFI', name: 'yearn.finance', sector: 'Aggregator' },
     { symbol: 'BAL', name: 'Balancer', sector: 'DEX' },
     { symbol: 'SUSHI', name: 'SushiSwap', sector: 'DEX' },
@@ -244,7 +243,6 @@ export const INDEX_TOKENS = {
     { symbol: 'GMX', name: 'GMX', sector: 'Derivatives' },
     // Staking & Yield
     { symbol: 'LDO', name: 'Lido DAO', sector: 'Staking' },
-    { symbol: 'RPL', name: 'Rocket Pool', sector: 'Staking' },
     { symbol: 'PENDLE', name: 'Pendle', sector: 'Yield' },
     { symbol: 'YFI', name: 'yearn.finance', sector: 'Yield' },
   ],
@@ -285,6 +283,7 @@ export const INDEX_TOKENS = {
     { symbol: 'STORJ', name: 'Storj', sector: 'Storage' },
     { symbol: 'HNT', name: 'Helium', sector: 'IoT' },
     { symbol: 'IOTX', name: 'IoTeX', sector: 'IoT' },
+    { symbol: 'IOTA', name: 'IOTA', sector: 'IoT' },
     { symbol: 'API3', name: 'API3', sector: 'Oracle' },
     { symbol: 'BAND', name: 'Band Protocol', sector: 'Oracle' },
     { symbol: 'AKT', name: 'Akash Network', sector: 'Compute' },
@@ -316,8 +315,8 @@ export const INDEX_CONFIGS = [
 
   // Core Indexes
   { symbol: 'N100-MCW', name: 'Nemes 100', methodology: 'MCW', baseIndex: 'N100', tokenCount: 100, color: '#00D395' },
-  { symbol: 'DEFI-MCW', name: 'DeFi 26', methodology: 'MCW', baseIndex: 'DEFI', tokenCount: 26, color: '#9B59B6' },
-  { symbol: 'INFRA-MCW', name: 'Infra 24', methodology: 'MCW', baseIndex: 'INFRA', tokenCount: 24, color: '#3498DB' },
+  { symbol: 'DEFI-MCW', name: 'DeFi 25', methodology: 'MCW', baseIndex: 'DEFI', tokenCount: 25, color: '#9B59B6' },
+  { symbol: 'INFRA-MCW', name: 'Infra 25', methodology: 'MCW', baseIndex: 'INFRA', tokenCount: 25, color: '#3498DB' },
 
   // Sector Sub-Indexes (added Nov 2024)
   { symbol: 'L1-MCW', name: 'Layer 1', methodology: 'MCW', baseIndex: 'L1', tokenCount: 24, color: '#E74C3C', parent: 'N100' },
@@ -325,7 +324,7 @@ export const INDEX_CONFIGS = [
   { symbol: 'AI-MCW', name: 'AI & Compute', methodology: 'MCW', baseIndex: 'AI', tokenCount: 10, color: '#1ABC9C', parent: 'INFRA' },
   { symbol: 'GAMING-MCW', name: 'Gaming', methodology: 'MCW', baseIndex: 'GAMING', tokenCount: 8, color: '#9B59B6', parent: 'N100' },
   { symbol: 'DEX-MCW', name: 'DEX', methodology: 'MCW', baseIndex: 'DEX', tokenCount: 11, color: '#FF6B9D', parent: 'DEFI' },
-  { symbol: 'YIELD-MCW', name: 'Yield', methodology: 'MCW', baseIndex: 'YIELD', tokenCount: 12, color: '#3498DB', parent: 'DEFI' },
+  { symbol: 'YIELD-MCW', name: 'Yield', methodology: 'MCW', baseIndex: 'YIELD', tokenCount: 11, color: '#3498DB', parent: 'DEFI' },
   { symbol: 'DATA-MCW', name: 'Data', methodology: 'MCW', baseIndex: 'DATA', tokenCount: 10, color: '#27AE60', parent: 'INFRA' },
 ]
 

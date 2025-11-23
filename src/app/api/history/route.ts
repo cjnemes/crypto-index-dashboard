@@ -6,41 +6,52 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const period = searchParams.get('period') || '30d'
   const indexName = searchParams.get('index')
+  const customStart = searchParams.get('start')
+  const customEnd = searchParams.get('end')
 
   // Calculate date range
   const now = new Date()
   let startDate: Date
+  let endDate: Date = now
 
-  switch (period) {
-    case '7d':
-      startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-      break
-    case '30d':
-      startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
-      break
-    case '60d':
-      startDate = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000)
-      break
-    case '90d':
-      startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
-      break
-    case '6m':
-      startDate = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000)
-      break
-    case '1y':
-      startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000)
-      break
-    case 'all':
-      startDate = new Date(0)
-      break
-    default:
-      startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+  // Use custom date range if provided
+  if (customStart && customEnd) {
+    startDate = new Date(customStart)
+    endDate = new Date(customEnd)
+    // Set end date to end of day
+    endDate.setHours(23, 59, 59, 999)
+  } else {
+    switch (period) {
+      case '7d':
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+        break
+      case '30d':
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+        break
+      case '60d':
+        startDate = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000)
+        break
+      case '90d':
+        startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
+        break
+      case '6m':
+        startDate = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000)
+        break
+      case '1y':
+        startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000)
+        break
+      case 'all':
+        startDate = new Date(0)
+        break
+      default:
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+    }
   }
 
   try {
     // Get index snapshots
     const where: any = {
-      timestamp: { gte: startDate }
+      timestamp: { gte: startDate, lte: endDate }
     }
     if (indexName) {
       where.indexName = indexName
@@ -92,9 +103,9 @@ export async function GET(request: Request) {
       }))
 
     return NextResponse.json({
-      period,
+      period: customStart && customEnd ? 'custom' : period,
       startDate: startDate.toISOString(),
-      endDate: now.toISOString(),
+      endDate: endDate.toISOString(),
       indexes: result
     })
 

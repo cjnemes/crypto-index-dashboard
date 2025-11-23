@@ -23,17 +23,36 @@ interface HistoryChartProps {
   className?: string
 }
 
+// Index categories for filtering
+const BENCHMARKS = ['BTC', 'ETH']
+const CORE_INDEXES = ['N100-MCW', 'DEFI-MCW', 'INFRA-MCW']
+const SECTOR_INDEXES = ['L1-MCW', 'SCALE-MCW', 'AI-MCW', 'GAMING-MCW', 'DEX-MCW', 'YIELD-MCW', 'DATA-MCW']
+
 export function HistoryChart({ className = '' }: HistoryChartProps) {
   const [data, setData] = useState<IndexHistory[]>([])
   const [period, setPeriod] = useState<string>('30d')
   const [loading, setLoading] = useState(true)
   const chartColors = useChartColors()
 
+  // Filter toggles
+  const [showBenchmarks, setShowBenchmarks] = useState(true)
+  const [showCore, setShowCore] = useState(true)
+  const [showSectors, setShowSectors] = useState(false)
+
+  // Custom date range
+  const [useCustomRange, setUseCustomRange] = useState(false)
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
+
   useEffect(() => {
     async function fetchHistory() {
       setLoading(true)
       try {
-        const response = await fetch(`/api/history?period=${period}`)
+        let url = `/api/history?period=${period}`
+        if (useCustomRange && startDate && endDate) {
+          url = `/api/history?start=${startDate}&end=${endDate}`
+        }
+        const response = await fetch(url)
         const result = await response.json()
         setData(result.indexes || [])
       } catch (error) {
@@ -42,16 +61,24 @@ export function HistoryChart({ className = '' }: HistoryChartProps) {
       setLoading(false)
     }
     fetchHistory()
-  }, [period])
+  }, [period, useCustomRange, startDate, endDate])
+
+  // Filter data based on toggle selections
+  const filteredData = data.filter(index => {
+    if (BENCHMARKS.includes(index.indexName)) return showBenchmarks
+    if (CORE_INDEXES.includes(index.indexName)) return showCore
+    if (SECTOR_INDEXES.includes(index.indexName)) return showSectors
+    return true
+  })
 
   // Transform data for recharts - show percentage change from period start
   // This allows comparing assets on different scales (BTC at 85k vs indexes at 700)
   const chartData = (() => {
-    if (data.length === 0) return []
+    if (filteredData.length === 0) return []
 
     // Get starting values for each index (first data point in period)
     const startingValues: Record<string, number> = {}
-    data.forEach(index => {
+    filteredData.forEach(index => {
       if (index.history.length > 0) {
         const sorted = [...index.history].sort((a, b) =>
           new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
@@ -62,7 +89,7 @@ export function HistoryChart({ className = '' }: HistoryChartProps) {
 
     // Get all timestamps
     const timestamps = new Set<string>()
-    data.forEach(index => {
+    filteredData.forEach(index => {
       index.history.forEach(h => timestamps.add(h.timestamp))
     })
 
@@ -71,7 +98,7 @@ export function HistoryChart({ className = '' }: HistoryChartProps) {
       const point: Record<string, any> = {
         timestamp: new Date(ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
       }
-      data.forEach(index => {
+      filteredData.forEach(index => {
         const historyPoint = index.history.find(h => h.timestamp === ts)
         if (historyPoint && startingValues[index.indexName]) {
           // Calculate percentage change from period start
@@ -110,29 +137,97 @@ export function HistoryChart({ className = '' }: HistoryChartProps) {
 
   return (
     <div className={`theme-card rounded-xl p-4 ${className}`}>
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold theme-text">Index Performance History</h3>
-        <div className="flex gap-1 flex-wrap">
-          {[
-            { value: '7d', label: '7D' },
-            { value: '30d', label: '30D' },
-            { value: '60d', label: '60D' },
-            { value: '90d', label: '90D' },
-            { value: '6m', label: '6M' },
-            { value: '1y', label: '1Y' },
-          ].map((p) => (
-            <button
-              key={p.value}
-              onClick={() => setPeriod(p.value)}
-              className={`px-3 py-1 rounded text-sm transition-colors ${
-                period === p.value
-                  ? 'bg-blue-600 text-white'
-                  : 'theme-btn'
-              }`}
-            >
-              {p.label}
-            </button>
-          ))}
+      <div className="flex flex-col gap-3 mb-4">
+        {/* Header with title and period buttons */}
+        <div className="flex justify-between items-center">
+          <h3 className="text-lg font-semibold theme-text">Index Performance History</h3>
+          <div className="flex gap-1 flex-wrap">
+            {[
+              { value: '7d', label: '7D' },
+              { value: '30d', label: '30D' },
+              { value: '60d', label: '60D' },
+              { value: '90d', label: '90D' },
+              { value: '6m', label: '6M' },
+              { value: '1y', label: '1Y' },
+            ].map((p) => (
+              <button
+                key={p.value}
+                onClick={() => {
+                  setPeriod(p.value)
+                  setUseCustomRange(false)
+                }}
+                className={`px-3 py-1 rounded text-sm transition-colors ${
+                  period === p.value && !useCustomRange
+                    ? 'bg-blue-600 text-white'
+                    : 'theme-btn'
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Filter toggles and custom date range */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t theme-border">
+          {/* Index category toggles */}
+          <div className="flex gap-4 text-sm">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showBenchmarks}
+                onChange={(e) => setShowBenchmarks(e.target.checked)}
+                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="theme-text-secondary">Benchmarks</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showCore}
+                onChange={(e) => setShowCore(e.target.checked)}
+                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="theme-text-secondary">Core Indexes</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showSectors}
+                onChange={(e) => setShowSectors(e.target.checked)}
+                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="theme-text-secondary">Sector Indexes</span>
+            </label>
+          </div>
+
+          {/* Custom date range */}
+          <div className="flex items-center gap-2 text-sm">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={useCustomRange}
+                onChange={(e) => setUseCustomRange(e.target.checked)}
+                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="theme-text-secondary">Custom:</span>
+            </label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              disabled={!useCustomRange}
+              className={`px-2 py-1 rounded text-sm theme-card border theme-border ${!useCustomRange ? 'opacity-50' : ''}`}
+            />
+            <span className="theme-text-muted">to</span>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              disabled={!useCustomRange}
+              className={`px-2 py-1 rounded text-sm theme-card border theme-border ${!useCustomRange ? 'opacity-50' : ''}`}
+            />
+          </div>
         </div>
       </div>
 
@@ -169,7 +264,7 @@ export function HistoryChart({ className = '' }: HistoryChartProps) {
             />
             <Tooltip content={<CustomTooltip />} />
             <Legend />
-            {data.map((index) => (
+            {filteredData.map((index) => (
               <Line
                 key={index.indexName}
                 type="monotone"
