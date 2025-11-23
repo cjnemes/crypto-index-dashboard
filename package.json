@@ -12,7 +12,8 @@
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "collect-prices": "tsx scripts/collect-prices.ts",
-    "backfill-history": "tsx scripts/backfill-history.ts"
+    "backfill-history": "tsx scripts/backfill-history.ts",
+    "backfill-coingecko": "tsx scripts/backfill-coingecko.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
