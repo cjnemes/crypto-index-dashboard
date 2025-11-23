@@ -133,7 +133,7 @@ const CMC_IDS: Record<string, number> = {
   'JOE': 11396,
   'AERO': 29270,
   'LQTY': 7429,
-  'PHAR': 31969,
+  'PHAR': 35643,
   'SPELL': 11289,
   // Additional Infra tokens
   'BAND': 4679,
