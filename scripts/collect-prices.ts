@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client'
+import { INDEX_TOKENS, INDEX_CONFIGS, INDEX_INCEPTION_DATE, INDEX_BASE_VALUE } from '../src/lib/tokens'
 
 const prisma = new PrismaClient()
 
@@ -50,53 +51,6 @@ async function fetchPrices(symbols: string[]): Promise<Map<string, CMCQuote>> {
   return prices
 }
 
-async function calculateIndexValue(
-  indexSymbol: string,
-  methodology: string,
-  baseIndex: string,
-  prices: Map<string, CMCQuote>
-): Promise<number> {
-  // Get tokens for this index
-  const tokens = await prisma.tokenConfig.findMany({
-    where: {
-      indexes: { contains: baseIndex },
-      isActive: true
-    }
-  })
-
-  if (tokens.length === 0) return 0
-
-  if (methodology === 'EW') {
-    // Equal Weight: Simple average of returns
-    let totalReturn = 0
-    let count = 0
-    for (const token of tokens) {
-      const price = prices.get(token.symbol)
-      if (price) {
-        totalReturn += price.quote.USD.percent_change_30d || 0
-        count++
-      }
-    }
-    return count > 0 ? totalReturn / count : 0
-  } else if (methodology === 'MCW') {
-    // Market Cap Weighted: Return total market cap
-    // Index value will be normalized to base 100 relative to baseline
-    let totalMarketCap = 0
-
-    for (const token of tokens) {
-      const price = prices.get(token.symbol)
-      if (price) {
-        const marketCap = price.quote.USD.market_cap || 0
-        totalMarketCap += marketCap
-      }
-    }
-
-    return totalMarketCap
-  }
-
-  return 0
-}
-
 async function main() {
   const startTime = Date.now()
   console.log('Starting price collection...')
@@ -121,46 +75,144 @@ async function main() {
 
     // Store prices in database
     const timestamp = new Date()
+    timestamp.setUTCHours(12, 0, 0, 0) // Normalize to noon UTC
     let pricesStored = 0
 
     for (const [symbol, data] of prices) {
-      // Skip tokens without valid price data
       if (!data.quote?.USD?.price) {
         console.log(`Skipping ${symbol} - no price data`)
         continue
       }
 
-      await prisma.price.create({
-        data: {
+      // Check if we already have a price for this date
+      const existing = await prisma.price.findFirst({
+        where: {
           symbol: data.symbol,
-          name: data.name,
-          price: data.quote.USD.price,
-          marketCap: data.quote.USD.market_cap || 0,
-          volume24h: data.quote.USD.volume_24h || 0,
-          change24h: data.quote.USD.percent_change_24h || 0,
-          change7d: data.quote.USD.percent_change_7d || 0,
-          change30d: data.quote.USD.percent_change_30d || 0,
-          timestamp
+          timestamp: {
+            gte: new Date(timestamp.getTime() - 12 * 60 * 60 * 1000),
+            lte: new Date(timestamp.getTime() + 12 * 60 * 60 * 1000)
+          }
         }
       })
-      pricesStored++
+
+      if (!existing) {
+        await prisma.price.create({
+          data: {
+            symbol: data.symbol,
+            name: data.name,
+            price: data.quote.USD.price,
+            marketCap: data.quote.USD.market_cap || 0,
+            volume24h: data.quote.USD.volume_24h || 0,
+            change24h: data.quote.USD.percent_change_24h || 0,
+            change7d: data.quote.USD.percent_change_7d || 0,
+            change30d: data.quote.USD.percent_change_30d || 0,
+            timestamp
+          }
+        })
+        pricesStored++
+      }
     }
     console.log(`Stored ${pricesStored} price records`)
 
-    // Calculate and store index snapshots
+    // =========================================================================
+    // CALCULATE DIVISORS FROM INCEPTION DATA
+    // =========================================================================
+    const inceptionDate = new Date(INDEX_INCEPTION_DATE)
+    inceptionDate.setUTCHours(12, 0, 0, 0)
+
+    const inceptionPrices = await prisma.price.findMany({
+      where: {
+        timestamp: {
+          gte: new Date(inceptionDate.getTime() - 12 * 60 * 60 * 1000),
+          lte: new Date(inceptionDate.getTime() + 12 * 60 * 60 * 1000)
+        }
+      }
+    })
+    const inceptionPriceMap = new Map(inceptionPrices.map(p => [p.symbol, p]))
+
+    // Calculate MCW divisors and EW baseline shares
+    const mcwDivisors = new Map<string, number>()
+    const ewBaselineShares = new Map<string, Map<string, number>>()
+    const ewDivisors = new Map<string, number>()
+
+    for (const indexConfig of INDEX_CONFIGS) {
+      if (indexConfig.methodology === 'BENCHMARK') continue
+
+      const indexKey = indexConfig.baseIndex as keyof typeof INDEX_TOKENS
+      const indexTokens = INDEX_TOKENS[indexKey] || []
+
+      if (indexConfig.methodology === 'MCW') {
+        let totalMarketCap = 0
+        for (const token of indexTokens) {
+          const price = inceptionPriceMap.get(token.symbol)
+          if (price && price.marketCap > 0) {
+            totalMarketCap += price.marketCap
+          }
+        }
+        mcwDivisors.set(indexConfig.symbol, totalMarketCap / INDEX_BASE_VALUE)
+
+      } else if (indexConfig.methodology === 'EW') {
+        const tokenShares = new Map<string, number>()
+        const notionalInvestment = 1_000_000
+        const numTokens = indexTokens.filter(t => inceptionPriceMap.has(t.symbol)).length
+        const investmentPerToken = notionalInvestment / numTokens
+
+        let totalPortfolioValue = 0
+        for (const token of indexTokens) {
+          const price = inceptionPriceMap.get(token.symbol)
+          if (price && price.price > 0) {
+            const shares = investmentPerToken / price.price
+            tokenShares.set(token.symbol, shares)
+            totalPortfolioValue += shares * price.price
+          }
+        }
+
+        ewBaselineShares.set(indexConfig.symbol, tokenShares)
+        ewDivisors.set(indexConfig.symbol, totalPortfolioValue / INDEX_BASE_VALUE)
+      }
+    }
+
+    // =========================================================================
+    // CALCULATE AND STORE INDEX SNAPSHOTS
+    // =========================================================================
+    const todayPriceMap = new Map<string, CMCQuote>()
+    for (const [symbol, data] of prices) {
+      todayPriceMap.set(symbol, data)
+    }
+
     const indexConfigs = await prisma.indexConfig.findMany({
       where: { isActive: true }
     })
 
     for (const index of indexConfigs) {
+      // Check if snapshot already exists for today
+      const existingSnapshot = await prisma.indexSnapshot.findFirst({
+        where: {
+          indexName: index.symbol,
+          timestamp: {
+            gte: new Date(timestamp.getTime() - 12 * 60 * 60 * 1000),
+            lte: new Date(timestamp.getTime() + 12 * 60 * 60 * 1000)
+          }
+        }
+      })
+
+      if (existingSnapshot) {
+        console.log(`Snapshot already exists for ${index.symbol} today, skipping`)
+        continue
+      }
+
+      let indexValue: number | null = null
+
       if (index.methodology === 'BENCHMARK') {
-        // For benchmarks (BTC, ETH), just store the price
-        const price = prices.get(index.symbol)
+        // Benchmarks: just use the price
+        const price = todayPriceMap.get(index.symbol)
         if (price) {
+          indexValue = price.quote.USD.price
+
           await prisma.indexSnapshot.create({
             data: {
               indexName: index.symbol,
-              value: price.quote.USD.price,
+              value: indexValue,
               returns1d: price.quote.USD.percent_change_24h,
               returns7d: price.quote.USD.percent_change_7d,
               returns30d: price.quote.USD.percent_change_30d,
@@ -169,75 +221,54 @@ async function main() {
           })
         }
       } else {
-        // For indexes, calculate value
-        const rawValue = await calculateIndexValue(
-          index.symbol,
-          index.methodology,
-          index.baseIndex,
-          prices
-        )
-
-        let normalizedValue: number
+        const indexKey = index.baseIndex as keyof typeof INDEX_TOKENS
+        const indexTokens = INDEX_TOKENS[indexKey] || []
 
         if (index.methodology === 'MCW') {
-          // MCW: rawValue is today's total market cap
-          // We need to normalize against baseline market cap to get index value
-          // Use yesterday's data to compute the change
-          const lastSnapshot = await prisma.indexSnapshot.findFirst({
-            where: { indexName: index.symbol },
-            orderBy: { timestamp: 'desc' }
-          })
-
-          if (!lastSnapshot) {
-            // First snapshot - start at 100
-            normalizedValue = 100
-          } else {
-            // Get yesterday's total market cap from prices
-            const tokens = await prisma.tokenConfig.findMany({
-              where: { indexes: { contains: index.baseIndex }, isActive: true }
-            })
-
-            const yesterdayPrices = await prisma.price.findMany({
-              where: {
-                symbol: { in: tokens.map(t => t.symbol) },
-                timestamp: {
-                  gte: new Date(Date.now() - 48 * 60 * 60 * 1000),
-                  lte: new Date(Date.now() - 12 * 60 * 60 * 1000)
-                }
-              },
-              orderBy: { timestamp: 'desc' },
-              distinct: ['symbol']
-            })
-
-            let yesterdayMcap = 0
-            for (const yp of yesterdayPrices) {
-              yesterdayMcap += yp.marketCap
+          // MCW: Index = Total Market Cap / Divisor
+          const divisor = mcwDivisors.get(index.symbol)
+          if (divisor && divisor > 0) {
+            let totalMarketCap = 0
+            for (const token of indexTokens) {
+              const price = todayPriceMap.get(token.symbol)
+              if (price && price.quote.USD.market_cap > 0) {
+                totalMarketCap += price.quote.USD.market_cap
+              }
             }
-
-            if (yesterdayMcap > 0 && rawValue > 0) {
-              // Index changes proportionally to total market cap
-              const mcapChange = rawValue / yesterdayMcap
-              normalizedValue = lastSnapshot.value * mcapChange
-            } else {
-              // Fallback to last value
-              normalizedValue = lastSnapshot.value
-            }
+            indexValue = totalMarketCap / divisor
           }
-        } else {
-          // EW: rawValue is return percentage
-          normalizedValue = 100 + rawValue
+
+        } else if (index.methodology === 'EW') {
+          // EW: Index = Sum(Price × Shares) / Divisor
+          const shares = ewBaselineShares.get(index.symbol)
+          const divisor = ewDivisors.get(index.symbol)
+
+          if (shares && divisor && divisor > 0) {
+            let portfolioValue = 0
+            for (const token of indexTokens) {
+              const price = todayPriceMap.get(token.symbol)
+              const tokenShares = shares.get(token.symbol)
+              if (price && tokenShares && price.quote.USD.price > 0) {
+                portfolioValue += price.quote.USD.price * tokenShares
+              }
+            }
+            indexValue = portfolioValue / divisor
+          }
         }
 
-        await prisma.indexSnapshot.create({
-          data: {
-            indexName: index.symbol,
-            value: normalizedValue,
-            timestamp
-          }
-        })
+        if (indexValue !== null) {
+          await prisma.indexSnapshot.create({
+            data: {
+              indexName: index.symbol,
+              value: indexValue,
+              timestamp
+            }
+          })
+          console.log(`  ${index.symbol}: ${indexValue.toFixed(2)}`)
+        }
       }
     }
-    console.log(`Stored ${indexConfigs.length} index snapshots`)
+    console.log(`Created index snapshots`)
 
     // Log success
     const duration = Date.now() - startTime
