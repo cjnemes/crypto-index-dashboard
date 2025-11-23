@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "3005:3000"
     environment:
       - CMC_API_KEY=${CMC_API_KEY}
       - DATABASE_URL=file:/app/data/crypto-index.db

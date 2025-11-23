@@ -27,10 +27,10 @@ docker-compose ps
 docker-compose exec crypto-dashboard npx prisma db seed
 
 # 5. Collect initial prices
-curl -X POST http://localhost:3000/api/collect
+curl -X POST http://localhost:3005/api/collect
 
 # 6. Verify
-curl http://localhost:3000/api/collect | jq '.totalSnapshots'
+curl http://localhost:3005/api/collect | jq '.totalSnapshots'
 ```
 
 ## Deploying with Existing Database (Preserving Your Data)
@@ -86,11 +86,11 @@ docker-compose logs -f
 
 ```bash
 # Check that all your snapshots are there
-curl http://localhost:3000/api/collect | jq '.totalSnapshots'
+curl http://localhost:3005/api/collect | jq '.totalSnapshots'
 # Should show ~2912 (8 indexes × 364 days)
 
 # Verify index values
-curl http://localhost:3000/api/dashboard | jq '.indexes[0]'
+curl http://localhost:3005/api/dashboard | jq '.indexes[0]'
 ```
 
 ## Database Backup
@@ -178,7 +178,7 @@ ports:
 
 ```bash
 # Add to crontab (crontab -e)
-0 12 * * * curl -X POST http://localhost:3000/api/collect
+0 12 * * * curl -X POST http://localhost:3005/api/collect
 ```
 
 ### Option 2: Docker Healthcheck with Collection
@@ -217,7 +217,7 @@ docker run --rm -v crypto-index-dashboard_crypto-data:/data alpine ls -la /data/
 docker-compose exec crypto-dashboard npx prisma db seed
 
 # Collect prices
-curl -X POST http://localhost:3000/api/collect
+curl -X POST http://localhost:3005/api/collect
 ```
 
 ### Permission Denied Errors
@@ -239,7 +239,7 @@ server {
     server_name crypto.example.com;
 
     location / {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:3005;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
