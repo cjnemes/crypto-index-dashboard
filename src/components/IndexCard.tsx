@@ -1,11 +1,13 @@
 'use client'
 
-import { TrendingUp, TrendingDown } from 'lucide-react'
+import Link from 'next/link'
+import { TrendingUp, TrendingDown, ChevronRight } from 'lucide-react'
 
 interface IndexData {
   symbol: string
   name: string
   returns: {
+    '24H': number
     '1M': number
     '3M': number
     '6M': number
@@ -21,14 +23,15 @@ interface IndexCardProps {
 }
 
 export function IndexCard({ data, isBenchmark = false }: IndexCardProps) {
-  const yearReturn = data.returns['1Y']
-  const isPositive = yearReturn >= 0
+  const change24h = data.returns['24H']
+  const isPositive = change24h >= 0
 
   return (
-    <div
-      className={`bg-gray-800 rounded-xl p-5 border-l-4 hover:bg-gray-750 transition-colors`}
-      style={{ borderLeftColor: data.color }}
-    >
+    <Link href={`/index/${encodeURIComponent(data.symbol)}`}>
+      <div
+        className={`bg-gray-800 rounded-xl p-5 border-l-4 hover:bg-gray-700 transition-colors cursor-pointer group`}
+        style={{ borderLeftColor: data.color }}
+      >
       <div className="flex justify-between items-start mb-3">
         <div>
           <h3 className="text-lg font-semibold text-white">{data.name}</h3>
@@ -57,12 +60,12 @@ export function IndexCard({ data, isBenchmark = false }: IndexCardProps) {
             isPositive ? 'text-green-400' : 'text-red-400'
           }`}
         >
-          {isPositive ? '+' : ''}{yearReturn.toFixed(1)}%
+          {isPositive ? '+' : ''}{change24h.toFixed(1)}%
         </span>
-        <span className="text-gray-500 text-sm">1Y</span>
+        <span className="text-gray-500 text-sm">24h</span>
       </div>
 
-      <div className="grid grid-cols-3 gap-2 text-sm">
+      <div className="grid grid-cols-4 gap-1.5 text-sm">
         <div className="bg-gray-700 rounded p-2 text-center">
           <p className="text-gray-400 text-xs">1M</p>
           <p className={data.returns['1M'] >= 0 ? 'text-green-400' : 'text-red-400'}>
@@ -81,7 +84,20 @@ export function IndexCard({ data, isBenchmark = false }: IndexCardProps) {
             {data.returns['6M'] >= 0 ? '+' : ''}{data.returns['6M'].toFixed(1)}%
           </p>
         </div>
+        <div className="bg-gray-700 rounded p-2 text-center">
+          <p className="text-gray-400 text-xs">1Y</p>
+          <p className={data.returns['1Y'] >= 0 ? 'text-green-400' : 'text-red-400'}>
+            {data.returns['1Y'] >= 0 ? '+' : ''}{data.returns['1Y'].toFixed(1)}%
+          </p>
+        </div>
       </div>
-    </div>
+
+      {/* Click indicator */}
+      <div className="mt-3 pt-3 border-t border-gray-700 flex items-center justify-between text-sm text-gray-400 group-hover:text-gray-300">
+        <span>View Details</span>
+        <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+      </div>
+      </div>
+    </Link>
   )
 }

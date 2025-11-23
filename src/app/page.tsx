@@ -6,21 +6,22 @@ import { PerformanceTable } from '@/components/PerformanceTable'
 import { PriceChart } from '@/components/PriceChart'
 import { TokenList } from '@/components/TokenList'
 import { HistoryChart } from '@/components/HistoryChart'
+import TopHoldingsSection from '@/components/TopHoldingsSection'
 import { RefreshCw, TrendingUp, TrendingDown, Database } from 'lucide-react'
 
 // Fallback static data (used if database is empty)
 const fallbackData = {
   benchmarks: [
-    { symbol: 'BTC', name: 'Bitcoin', returns: { '1M': -21.6, '3M': -27.8, '6M': -24.5, '1Y': -14.8 }, color: '#F7931A' },
-    { symbol: 'ETH', name: 'Ethereum', returns: { '1M': -27.9, '3M': -43.2, '6M': 3.0, '1Y': -17.6 }, color: '#627EEA' },
+    { symbol: 'BTC', name: 'Bitcoin', returns: { '24H': 0, '1M': -21.6, '3M': -27.8, '6M': -24.5, '1Y': -14.8 }, color: '#F7931A' },
+    { symbol: 'ETH', name: 'Ethereum', returns: { '24H': 0, '1M': -27.9, '3M': -43.2, '6M': 3.0, '1Y': -17.6 }, color: '#627EEA' },
   ],
   indexes: [
-    { symbol: 'N100-MCW', name: 'Nemes 100 MCW', returns: { '1M': -18.4, '3M': -32.6, '6M': -12.8, '1Y': 8.6 }, color: '#00D395', components: 100 },
-    { symbol: 'N100-EW', name: 'Nemes 100 EW', returns: { '1M': -28.4, '3M': -48.2, '6M': -32.6, '1Y': -28.6 }, color: '#00A67E', components: 100 },
-    { symbol: 'DEFI-MCW', name: 'DeFi 25 MCW', returns: { '1M': -26.4, '3M': -48.2, '6M': -32.4, '1Y': -18.4 }, color: '#9B59B6', components: 25 },
-    { symbol: 'DEFI-EW', name: 'DeFi 25 EW', returns: { '1M': -32.4, '3M': -52.6, '6M': -38.4, '1Y': -24.6 }, color: '#8E44AD', components: 25 },
-    { symbol: 'INFRA-MCW', name: 'Infra 25 MCW', returns: { '1M': -30.0, '3M': -55.0, '6M': -28.1, '1Y': -38.4 }, color: '#3498DB', components: 25 },
-    { symbol: 'INFRA-EW', name: 'Infra 25 EW', returns: { '1M': -38.4, '3M': -62.4, '6M': -42.6, '1Y': -48.6 }, color: '#2980B9', components: 25 },
+    { symbol: 'N100-MCW', name: 'Nemes 100 MCW', returns: { '24H': 0, '1M': -18.4, '3M': -32.6, '6M': -12.8, '1Y': 8.6 }, color: '#00D395', components: 100 },
+    { symbol: 'N100-EW', name: 'Nemes 100 EW', returns: { '24H': 0, '1M': -28.4, '3M': -48.2, '6M': -32.6, '1Y': -28.6 }, color: '#00A67E', components: 100 },
+    { symbol: 'DEFI-MCW', name: 'DeFi 25 MCW', returns: { '24H': 0, '1M': -26.4, '3M': -48.2, '6M': -32.4, '1Y': -18.4 }, color: '#9B59B6', components: 25 },
+    { symbol: 'DEFI-EW', name: 'DeFi 25 EW', returns: { '24H': 0, '1M': -32.4, '3M': -52.6, '6M': -38.4, '1Y': -24.6 }, color: '#8E44AD', components: 25 },
+    { symbol: 'INFRA-MCW', name: 'Infra 25 MCW', returns: { '24H': 0, '1M': -30.0, '3M': -55.0, '6M': -28.1, '1Y': -38.4 }, color: '#3498DB', components: 25 },
+    { symbol: 'INFRA-EW', name: 'Infra 25 EW', returns: { '24H': 0, '1M': -38.4, '3M': -62.4, '6M': -42.6, '1Y': -48.6 }, color: '#2980B9', components: 25 },
   ]
 }
 
@@ -40,7 +41,7 @@ const fallbackTokens = [
 interface IndexData {
   symbol: string
   name: string
-  returns: { '1M': number; '3M': number; '6M': number; '1Y': number }
+  returns: { '24H': number; '1M': number; '3M': number; '6M': number; '1Y': number }
   color: string
   components?: number
 }
@@ -198,6 +199,12 @@ export default function Home() {
             <IndexCard key={item.symbol} data={item} />
           ))}
         </div>
+      </div>
+
+      {/* Top Holdings Preview */}
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold text-gray-300 mb-4">Top Holdings by Index</h2>
+        <TopHoldingsSection />
       </div>
 
       {/* History Chart */}

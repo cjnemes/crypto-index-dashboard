@@ -3,15 +3,15 @@ import { prisma } from '@/lib/prisma'
 
 // Verified baseline returns from CMC API (November 2025)
 // These are used until we have enough historical data collected
-const BASELINE_RETURNS: Record<string, { '1M': number; '3M': number; '6M': number; '1Y': number }> = {
-  'BTC': { '1M': -21.6, '3M': -27.8, '6M': -24.5, '1Y': -14.8 },
-  'ETH': { '1M': -27.9, '3M': -43.2, '6M': 3.0, '1Y': -17.6 },
-  'N100-MCW': { '1M': -18.4, '3M': -32.6, '6M': -12.8, '1Y': 8.6 },
-  'N100-EW': { '1M': -28.4, '3M': -48.2, '6M': -32.6, '1Y': -28.6 },
-  'DEFI-MCW': { '1M': -26.4, '3M': -48.2, '6M': -32.4, '1Y': -18.4 },
-  'DEFI-EW': { '1M': -32.4, '3M': -52.6, '6M': -38.4, '1Y': -24.6 },
-  'INFRA-MCW': { '1M': -30.0, '3M': -55.0, '6M': -28.1, '1Y': -38.4 },
-  'INFRA-EW': { '1M': -38.4, '3M': -62.4, '6M': -42.6, '1Y': -48.6 },
+const BASELINE_RETURNS: Record<string, { '24H': number; '1M': number; '3M': number; '6M': number; '1Y': number }> = {
+  'BTC': { '24H': 0, '1M': -21.6, '3M': -27.8, '6M': -24.5, '1Y': -14.8 },
+  'ETH': { '24H': 0, '1M': -27.9, '3M': -43.2, '6M': 3.0, '1Y': -17.6 },
+  'N100-MCW': { '24H': 0, '1M': -18.4, '3M': -32.6, '6M': -12.8, '1Y': 8.6 },
+  'N100-EW': { '24H': 0, '1M': -28.4, '3M': -48.2, '6M': -32.6, '1Y': -28.6 },
+  'DEFI-MCW': { '24H': 0, '1M': -26.4, '3M': -48.2, '6M': -32.4, '1Y': -18.4 },
+  'DEFI-EW': { '24H': 0, '1M': -32.4, '3M': -52.6, '6M': -38.4, '1Y': -24.6 },
+  'INFRA-MCW': { '24H': 0, '1M': -30.0, '3M': -55.0, '6M': -28.1, '1Y': -38.4 },
+  'INFRA-EW': { '24H': 0, '1M': -38.4, '3M': -62.4, '6M': -42.6, '1Y': -48.6 },
 }
 
 // GET /api/dashboard - Get latest data for dashboard display
@@ -36,18 +36,25 @@ export async function GET() {
         })
 
         // Get baseline returns for this index
-        const baseline = BASELINE_RETURNS[config.symbol] || { '1M': 0, '3M': 0, '6M': 0, '1Y': 0 }
+        const baseline = BASELINE_RETURNS[config.symbol] || { '24H': 0, '1M': 0, '3M': 0, '6M': 0, '1Y': 0 }
 
         let returns = { ...baseline }
 
-        if (hasHistoricalData && latest) {
-          // Calculate returns from historical data if we have enough
-          const oneMonthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-          const threeMonthsAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
-          const sixMonthsAgo = new Date(Date.now() - 180 * 24 * 60 * 60 * 1000)
-          const oneYearAgo = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000)
+        if (latest) {
+          // Calculate returns from historical data
+          // Use the latest snapshot timestamp as reference point for period calculations
+          const latestTime = latest.timestamp.getTime()
+          const oneMonthAgo = new Date(latestTime - 30 * 24 * 60 * 60 * 1000)
+          const threeMonthsAgo = new Date(latestTime - 90 * 24 * 60 * 60 * 1000)
+          const sixMonthsAgo = new Date(latestTime - 180 * 24 * 60 * 60 * 1000)
+          const oneYearAgo = new Date(latestTime - 365 * 24 * 60 * 60 * 1000)
 
-          const [monthOld, threeMonthOld, sixMonthOld, yearOld] = await Promise.all([
+          // For 24h, get the PREVIOUS snapshot (not time-based) to handle daily data correctly
+          const [previousSnapshot, monthOld, threeMonthOld, sixMonthOld, yearOld] = await Promise.all([
+            prisma.indexSnapshot.findFirst({
+              where: { indexName: config.symbol, timestamp: { lt: latest.timestamp } },
+              orderBy: { timestamp: 'desc' }
+            }),
             prisma.indexSnapshot.findFirst({
               where: { indexName: config.symbol, timestamp: { lte: oneMonthAgo } },
               orderBy: { timestamp: 'desc' }
@@ -67,7 +74,9 @@ export async function GET() {
           ])
 
           // Use calculated returns if we have the data, otherwise use baseline
+          // For 24H, compare against previous snapshot (works for daily data)
           returns = {
+            '24H': previousSnapshot ? ((latest.value - previousSnapshot.value) / previousSnapshot.value) * 100 : (latest.returns1d ?? baseline['24H']),
             '1M': monthOld ? ((latest.value - monthOld.value) / monthOld.value) * 100 : baseline['1M'],
             '3M': threeMonthOld ? ((latest.value - threeMonthOld.value) / threeMonthOld.value) * 100 : baseline['3M'],
             '6M': sixMonthOld ? ((latest.value - sixMonthOld.value) / sixMonthOld.value) * 100 : baseline['6M'],

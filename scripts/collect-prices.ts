@@ -79,9 +79,9 @@ async function calculateIndexValue(
     }
     return count > 0 ? totalReturn / count : 0
   } else if (methodology === 'MCW') {
-    // Market Cap Weighted
+    // Market Cap Weighted: Return total market cap
+    // Index value will be normalized to base 100 relative to baseline
     let totalMarketCap = 0
-    let weightedReturn = 0
 
     for (const token of tokens) {
       const price = prices.get(token.symbol)
@@ -91,15 +91,7 @@ async function calculateIndexValue(
       }
     }
 
-    for (const token of tokens) {
-      const price = prices.get(token.symbol)
-      if (price && totalMarketCap > 0) {
-        const weight = (price.quote.USD.market_cap || 0) / totalMarketCap
-        weightedReturn += weight * (price.quote.USD.percent_change_30d || 0)
-      }
-    }
-
-    return weightedReturn
+    return totalMarketCap
   }
 
   return 0
@@ -162,7 +154,7 @@ async function main() {
 
     for (const index of indexConfigs) {
       if (index.methodology === 'BENCHMARK') {
-        // For benchmarks (BTC, ETH), just store the price change
+        // For benchmarks (BTC, ETH), just store the price
         const price = prices.get(index.symbol)
         if (price) {
           await prisma.indexSnapshot.create({
@@ -177,19 +169,69 @@ async function main() {
           })
         }
       } else {
-        // For indexes, calculate weighted value
-        const value = await calculateIndexValue(
+        // For indexes, calculate value
+        const rawValue = await calculateIndexValue(
           index.symbol,
           index.methodology,
           index.baseIndex,
           prices
         )
 
+        let normalizedValue: number
+
+        if (index.methodology === 'MCW') {
+          // MCW: rawValue is today's total market cap
+          // We need to normalize against baseline market cap to get index value
+          // Use yesterday's data to compute the change
+          const lastSnapshot = await prisma.indexSnapshot.findFirst({
+            where: { indexName: index.symbol },
+            orderBy: { timestamp: 'desc' }
+          })
+
+          if (!lastSnapshot) {
+            // First snapshot - start at 100
+            normalizedValue = 100
+          } else {
+            // Get yesterday's total market cap from prices
+            const tokens = await prisma.tokenConfig.findMany({
+              where: { indexes: { contains: index.baseIndex }, isActive: true }
+            })
+
+            const yesterdayPrices = await prisma.price.findMany({
+              where: {
+                symbol: { in: tokens.map(t => t.symbol) },
+                timestamp: {
+                  gte: new Date(Date.now() - 48 * 60 * 60 * 1000),
+                  lte: new Date(Date.now() - 12 * 60 * 60 * 1000)
+                }
+              },
+              orderBy: { timestamp: 'desc' },
+              distinct: ['symbol']
+            })
+
+            let yesterdayMcap = 0
+            for (const yp of yesterdayPrices) {
+              yesterdayMcap += yp.marketCap
+            }
+
+            if (yesterdayMcap > 0 && rawValue > 0) {
+              // Index changes proportionally to total market cap
+              const mcapChange = rawValue / yesterdayMcap
+              normalizedValue = lastSnapshot.value * mcapChange
+            } else {
+              // Fallback to last value
+              normalizedValue = lastSnapshot.value
+            }
+          }
+        } else {
+          // EW: rawValue is return percentage
+          normalizedValue = 100 + rawValue
+        }
+
         await prisma.indexSnapshot.create({
           data: {
             indexName: index.symbol,
-            value: 100 + value, // Normalize to base 100
-            returns30d: value,
+            value: normalizedValue,
             timestamp
           }
         })

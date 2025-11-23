@@ -170,6 +170,18 @@ export const INDEX_TOKENS = {
   ],
 }
 
+// ============================================================================
+// INDEX CONFIGURATION
+// ============================================================================
+
+// Index inception date - all indexes start from this date
+// Divisors are calculated based on market data from this date
+export const INDEX_INCEPTION_DATE = '2024-11-25'
+
+// Starting index value - all indexes begin at this value
+// Similar to: S&P 500 started at 10, Nasdaq at 100, Russell 2000 at 135
+export const INDEX_BASE_VALUE = 1000
+
 // Index configurations
 export const INDEX_CONFIGS = [
   { symbol: 'BTC', name: 'Bitcoin', methodology: 'BENCHMARK', baseIndex: 'BTC', tokenCount: 1, color: '#F7931A' },
@@ -181,6 +193,29 @@ export const INDEX_CONFIGS = [
   { symbol: 'INFRA-MCW', name: 'Infra 25 MCW', methodology: 'MCW', baseIndex: 'INFRA', tokenCount: 25, color: '#3498DB' },
   { symbol: 'INFRA-EW', name: 'Infra 25 EW', methodology: 'EW', baseIndex: 'INFRA', tokenCount: 25, color: '#2980B9' },
 ]
+
+/**
+ * INDEX METHODOLOGY (following S&P/Dow Jones standards)
+ * =====================================================
+ *
+ * MCW (Market Cap Weighted) - like S&P 500:
+ *   Index = Total_Market_Cap / Divisor
+ *   Divisor = Baseline_Total_Market_Cap / INDEX_BASE_VALUE
+ *
+ *   Example: If baseline total mcap = $677B and base value = 1000
+ *   Divisor = $677B / 1000 = $677M
+ *   If today's total mcap = $650B, Index = $650B / $677M = 960.1
+ *
+ * EW (Equal Weighted) - like S&P 500 Equal Weight:
+ *   At inception, each token gets equal dollar allocation
+ *   "Shares" per token = (Notional_Investment / N) / Price_at_baseline
+ *   Index = Sum(Price_today × Shares) / Divisor
+ *
+ *   This ensures each token's % move contributes equally to index returns
+ *
+ * BENCHMARK:
+ *   Raw price of the asset (BTC, ETH) - no divisor needed
+ */
 
 // Get all unique token symbols for API calls
 export function getAllTokenSymbols(): string[] {

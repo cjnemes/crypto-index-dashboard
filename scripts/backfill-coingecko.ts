@@ -179,7 +179,9 @@ async function calculateIndexValues(date: Date): Promise<Map<string, number>> {
           indexValues.set(indexConfig.symbol, sum / count)
         }
       } else if (indexConfig.methodology === 'MCW') {
-        // Market Cap Weighted
+        // Market Cap Weighted: Track total market cap of constituents
+        // Index value = (total_mcap_today / total_mcap_baseline) × 100
+        // This is how S&P 500 and similar indexes work
         let totalMarketCap = 0
         for (const token of indexTokens) {
           const price = priceMap.get(token.symbol)
@@ -188,17 +190,8 @@ async function calculateIndexValues(date: Date): Promise<Map<string, number>> {
           }
         }
 
-        let weightedSum = 0
-        for (const token of indexTokens) {
-          const price = priceMap.get(token.symbol)
-          if (price && price.marketCap > 0 && totalMarketCap > 0) {
-            const weight = price.marketCap / totalMarketCap
-            weightedSum += weight * price.price
-          }
-        }
-
-        if (weightedSum > 0) {
-          indexValues.set(indexConfig.symbol, weightedSum)
+        if (totalMarketCap > 0) {
+          indexValues.set(indexConfig.symbol, totalMarketCap)
         }
       }
     }

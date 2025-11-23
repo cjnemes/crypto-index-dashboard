@@ -8,7 +8,7 @@
  */
 
 import { PrismaClient } from '@prisma/client'
-import { INDEX_TOKENS, INDEX_CONFIGS } from '../src/lib/tokens'
+import { INDEX_TOKENS, INDEX_CONFIGS, INDEX_INCEPTION_DATE, INDEX_BASE_VALUE } from '../src/lib/tokens'
 
 const prisma = new PrismaClient()
 
@@ -288,7 +288,9 @@ async function calculateIndexValues(date: Date): Promise<Map<string, number>> {
           indexValues.set(indexConfig.symbol, sum / count)
         }
       } else if (indexConfig.methodology === 'MCW') {
-        // Market Cap Weighted
+        // Market Cap Weighted: Track total market cap of constituents
+        // Index value = (total_mcap_today / total_mcap_baseline) × 100
+        // This is how S&P 500 and similar indexes work
         let totalMarketCap = 0
         for (const token of indexTokens) {
           const price = priceMap.get(token.symbol)
@@ -297,17 +299,8 @@ async function calculateIndexValues(date: Date): Promise<Map<string, number>> {
           }
         }
 
-        let weightedSum = 0
-        for (const token of indexTokens) {
-          const price = priceMap.get(token.symbol)
-          if (price && price.marketCap > 0 && totalMarketCap > 0) {
-            const weight = price.marketCap / totalMarketCap
-            weightedSum += weight * price.price
-          }
-        }
-
-        if (weightedSum > 0) {
-          indexValues.set(indexConfig.symbol, weightedSum)
+        if (totalMarketCap > 0) {
+          indexValues.set(indexConfig.symbol, totalMarketCap)
         }
       }
     }
@@ -431,67 +424,188 @@ async function main() {
     }
 
     console.log('\n' + '-'.repeat(60))
-    console.log('Phase 2: Creating index snapshots')
+    console.log('Phase 2: Creating index snapshots (Divisor Method)')
     console.log('-'.repeat(60))
 
-    // Get all unique dates from prices
-    const sortedDates = Array.from(allDates).sort()
+    // Get all unique dates from the database (not just this run)
+    const allPriceDates = await prisma.price.findMany({
+      select: { timestamp: true },
+      distinct: ['timestamp'],
+      orderBy: { timestamp: 'asc' }
+    })
+
+    const sortedDates = [...new Set(allPriceDates.map(p => {
+      const d = new Date(p.timestamp)
+      d.setUTCHours(12, 0, 0, 0)
+      return d.toISOString().split('T')[0]
+    }))].sort()
+
     console.log(`Processing ${sortedDates.length} unique dates`)
+    console.log(`Index inception date: ${INDEX_INCEPTION_DATE}`)
+    console.log(`Index base value: ${INDEX_BASE_VALUE}`)
 
     if (sortedDates.length === 0) {
       console.log('No dates to process')
       return
     }
 
-    // Get baseline values (first date) for normalization
-    const firstDate = new Date(sortedDates[0])
-    firstDate.setUTCHours(12, 0, 0, 0)
-    const baselineValues = await calculateIndexValues(firstDate)
+    // =========================================================================
+    // STEP 1: Calculate divisors and baseline shares from inception date
+    // =========================================================================
+    const inceptionDate = new Date(INDEX_INCEPTION_DATE)
+    inceptionDate.setUTCHours(12, 0, 0, 0)
 
-    console.log('\nBaseline values (first date):')
-    baselineValues.forEach((value, name) => {
-      console.log(`  ${name}: ${value.toFixed(2)}`)
+    // Get prices for inception date
+    const inceptionPrices = await prisma.price.findMany({
+      where: {
+        timestamp: {
+          gte: new Date(inceptionDate.getTime() - 12 * 60 * 60 * 1000),
+          lte: new Date(inceptionDate.getTime() + 12 * 60 * 60 * 1000)
+        }
+      }
     })
+    const inceptionPriceMap = new Map(inceptionPrices.map(p => [p.symbol, p]))
 
-    // Create index snapshots for each date
+    console.log(`\nInception date prices: ${inceptionPrices.length} tokens`)
+
+    // Calculate divisors for MCW indexes and baseline shares for EW indexes
+    const mcwDivisors = new Map<string, number>()
+    const ewBaselineShares = new Map<string, Map<string, number>>() // indexName -> (tokenSymbol -> shares)
+    const ewDivisors = new Map<string, number>()
+
+    for (const indexConfig of INDEX_CONFIGS) {
+      if (indexConfig.methodology === 'BENCHMARK') continue
+
+      const indexKey = indexConfig.baseIndex as keyof typeof INDEX_TOKENS
+      const indexTokens = INDEX_TOKENS[indexKey] || []
+
+      if (indexConfig.methodology === 'MCW') {
+        // MCW: Divisor = Total Market Cap at inception / Base Value
+        let totalMarketCap = 0
+        for (const token of indexTokens) {
+          const price = inceptionPriceMap.get(token.symbol)
+          if (price && price.marketCap > 0) {
+            totalMarketCap += price.marketCap
+          }
+        }
+        const divisor = totalMarketCap / INDEX_BASE_VALUE
+        mcwDivisors.set(indexConfig.symbol, divisor)
+        console.log(`  ${indexConfig.symbol} divisor: $${(divisor / 1e6).toFixed(2)}M (from $${(totalMarketCap / 1e9).toFixed(2)}B total mcap)`)
+
+      } else if (indexConfig.methodology === 'EW') {
+        // EW: Each token gets equal dollar weight at inception
+        // Shares per token = (Notional / N) / Price
+        // We use a notional value that gives us our base index value
+
+        const tokenShares = new Map<string, number>()
+        const notionalInvestment = 1_000_000 // $1M notional portfolio
+        const numTokens = indexTokens.filter(t => inceptionPriceMap.has(t.symbol)).length
+        const investmentPerToken = notionalInvestment / numTokens
+
+        let totalPortfolioValue = 0
+        for (const token of indexTokens) {
+          const price = inceptionPriceMap.get(token.symbol)
+          if (price && price.price > 0) {
+            const shares = investmentPerToken / price.price
+            tokenShares.set(token.symbol, shares)
+            totalPortfolioValue += shares * price.price
+          }
+        }
+
+        ewBaselineShares.set(indexConfig.symbol, tokenShares)
+        const divisor = totalPortfolioValue / INDEX_BASE_VALUE
+        ewDivisors.set(indexConfig.symbol, divisor)
+        console.log(`  ${indexConfig.symbol} divisor: $${divisor.toFixed(2)} (${numTokens} tokens, equal weight)`)
+      }
+    }
+
+    // =========================================================================
+    // STEP 2: Calculate index values for each date using divisors
+    // =========================================================================
+    console.log('\nCalculating index values...')
     let snapshotsCreated = 0
+
     for (const dateStr of sortedDates) {
       const date = new Date(dateStr)
       date.setUTCHours(12, 0, 0, 0)
 
-      const indexValues = await calculateIndexValues(date)
+      // Get prices for this date
+      const prices = await prisma.price.findMany({
+        where: {
+          timestamp: {
+            gte: new Date(date.getTime() - 12 * 60 * 60 * 1000),
+            lte: new Date(date.getTime() + 12 * 60 * 60 * 1000)
+          }
+        }
+      })
+      const priceMap = new Map(prices.map(p => [p.symbol, p]))
 
-      for (const [indexName, rawValue] of indexValues) {
-        const config = INDEX_CONFIGS.find(c => c.symbol === indexName)
-        if (!config) continue
-
-        // Check if snapshot exists
+      for (const indexConfig of INDEX_CONFIGS) {
+        // Check if snapshot already exists
         const existing = await prisma.indexSnapshot.findFirst({
           where: {
-            indexName,
+            indexName: indexConfig.symbol,
             timestamp: {
               gte: new Date(date.getTime() - 12 * 60 * 60 * 1000),
               lte: new Date(date.getTime() + 12 * 60 * 60 * 1000)
             }
           }
         })
+        if (existing) continue
 
-        if (!existing) {
-          let normalizedValue: number
+        let indexValue: number | null = null
 
-          if (config.methodology === 'BENCHMARK') {
-            // Use raw price for benchmarks
-            normalizedValue = rawValue
-          } else {
-            // Normalize to base 100 for indexes
-            const baseline = baselineValues.get(indexName) || rawValue
-            normalizedValue = (rawValue / baseline) * 100
+        if (indexConfig.methodology === 'BENCHMARK') {
+          // Benchmark: just use raw price
+          const price = priceMap.get(indexConfig.symbol)
+          if (price) {
+            indexValue = price.price
           }
 
+        } else if (indexConfig.methodology === 'MCW') {
+          // MCW: Index = Total Market Cap / Divisor
+          const divisor = mcwDivisors.get(indexConfig.symbol)
+          if (!divisor) continue
+
+          const indexKey = indexConfig.baseIndex as keyof typeof INDEX_TOKENS
+          const indexTokens = INDEX_TOKENS[indexKey] || []
+
+          let totalMarketCap = 0
+          for (const token of indexTokens) {
+            const price = priceMap.get(token.symbol)
+            if (price && price.marketCap > 0) {
+              totalMarketCap += price.marketCap
+            }
+          }
+
+          if (totalMarketCap > 0) {
+            indexValue = totalMarketCap / divisor
+          }
+
+        } else if (indexConfig.methodology === 'EW') {
+          // EW: Index = Sum(Price × Shares) / Divisor
+          const shares = ewBaselineShares.get(indexConfig.symbol)
+          const divisor = ewDivisors.get(indexConfig.symbol)
+          if (!shares || !divisor) continue
+
+          let portfolioValue = 0
+          for (const [symbol, tokenShares] of shares) {
+            const price = priceMap.get(symbol)
+            if (price && price.price > 0) {
+              portfolioValue += price.price * tokenShares
+            }
+          }
+
+          if (portfolioValue > 0) {
+            indexValue = portfolioValue / divisor
+          }
+        }
+
+        if (indexValue !== null) {
           await prisma.indexSnapshot.create({
             data: {
-              indexName,
-              value: normalizedValue,
+              indexName: indexConfig.symbol,
+              value: indexValue,
               timestamp: date
             }
           })

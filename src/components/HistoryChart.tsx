@@ -110,18 +110,25 @@ export function HistoryChart({ className = '' }: HistoryChartProps) {
     <div className={`bg-gray-800 rounded-xl p-4 ${className}`}>
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-semibold text-white">Index Performance History</h3>
-        <div className="flex gap-2">
-          {['7d', '30d', '90d', 'all'].map((p) => (
+        <div className="flex gap-1 flex-wrap">
+          {[
+            { value: '7d', label: '7D' },
+            { value: '30d', label: '30D' },
+            { value: '60d', label: '60D' },
+            { value: '90d', label: '90D' },
+            { value: '6m', label: '6M' },
+            { value: '1y', label: '1Y' },
+          ].map((p) => (
             <button
-              key={p}
-              onClick={() => setPeriod(p)}
-              className={`px-3 py-1 rounded text-sm ${
-                period === p
+              key={p.value}
+              onClick={() => setPeriod(p.value)}
+              className={`px-3 py-1 rounded text-sm transition-colors ${
+                period === p.value
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
               }`}
             >
-              {p === 'all' ? 'All' : p.toUpperCase()}
+              {p.label}
             </button>
           ))}
         </div>
