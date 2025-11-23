@@ -1,0 +1,81 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Individual token prices from CMC
+model Price {
+  id        Int      @id @default(autoincrement())
+  symbol    String
+  name      String
+  price     Float
+  marketCap Float
+  volume24h Float?
+  change24h Float?
+  change7d  Float?
+  change30d Float?
+  timestamp DateTime @default(now())
+
+  @@index([symbol, timestamp])
+  @@index([timestamp])
+}
+
+// Calculated index values
+model IndexSnapshot {
+  id        Int      @id @default(autoincrement())
+  indexName String   // e.g., "N100-MCW", "DEFI-EW"
+  value     Float    // Index value (normalized to 100 at inception)
+  returns1d Float?   // 1-day return
+  returns7d Float?   // 7-day return
+  returns30d Float?  // 30-day return
+  timestamp DateTime @default(now())
+
+  @@index([indexName, timestamp])
+  @@index([timestamp])
+}
+
+// Token configuration - which tokens belong to which index
+model TokenConfig {
+  id        Int      @id @default(autoincrement())
+  symbol    String
+  name      String
+  sector    String?  // DeFi, Infrastructure, Layer1, etc.
+  indexes   String   // Comma-separated list: "N100,DEFI"
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([symbol])
+}
+
+// Index configuration
+model IndexConfig {
+  id          Int      @id @default(autoincrement())
+  symbol      String   @unique // N100-MCW, DEFI-EW, etc.
+  name        String   // Nemes 100 Market Cap Weighted
+  description String?
+  methodology String   // MCW or EW
+  baseIndex   String   // N100, DEFI, INFRA
+  tokenCount  Int
+  color       String   // For UI display
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Collection job logs
+model CollectionLog {
+  id           Int      @id @default(autoincrement())
+  status       String   // success, error
+  tokensCount  Int?
+  errorMessage String?
+  duration     Int?     // milliseconds
+  timestamp    DateTime @default(now())
+}

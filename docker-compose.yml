@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  crypto-dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - CMC_API_KEY=${CMC_API_KEY}
+      - DATABASE_URL=file:/app/data/crypto-index.db
+    volumes:
+      # Persist the database
+      - crypto-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  crypto-data:
