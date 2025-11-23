@@ -379,8 +379,7 @@ async function main() {
       data: {
         status: 'success',
         tokensCount: tokensWithCGId.length - failed,
-        duration: 0,
-        notes: `Backfilled ${DAYS_TO_BACKFILL} days from CoinGecko`
+        duration: 0
       }
     })
 
