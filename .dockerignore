@@ -1,0 +1,50 @@
+# Git
+.git
+.gitignore
+
+# Environment files (secrets!)
+.env
+.env.*
+!.env.example
+
+# Documentation
+*.md
+docs/
+
+# Database files
+*.db
+*.db-journal
+prisma/dev.db
+prisma/*.backup*
+
+# Dependencies (rebuilt in container)
+node_modules
+
+# Build artifacts
+.next
+.vercel
+dist
+out
+
+# Testing
+coverage
+.nyc_output
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# SSL certificates
+*.pem
+*.key
+*.crt

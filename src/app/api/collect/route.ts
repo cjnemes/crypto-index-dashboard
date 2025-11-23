@@ -63,9 +63,12 @@ async function fetchPrices(symbols: string[]): Promise<Map<string, CMCQuote>> {
 export async function POST(request: Request) {
   const startTime = Date.now()
 
-  // Optional: Add API key protection
+  // API key protection - required in production
   const authHeader = request.headers.get('authorization')
   const expectedKey = process.env.COLLECT_API_KEY
+  if (process.env.NODE_ENV === 'production' && !expectedKey) {
+    return NextResponse.json({ error: 'COLLECT_API_KEY not configured' }, { status: 500 })
+  }
   if (expectedKey && authHeader !== `Bearer ${expectedKey}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
