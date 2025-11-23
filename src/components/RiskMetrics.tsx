@@ -222,7 +222,7 @@ function IndexMetricsSection({
   const ethBetaInfo = getBetaInfo(metrics.betaVsETH)
 
   return (
-    <div className="theme-card rounded-lg border theme-border overflow-hidden">
+    <div className="theme-card rounded-lg border theme-border">
       {/* Collapsible Header */}
       <button
         type="button"
