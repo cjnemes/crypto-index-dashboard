@@ -1,6 +1,7 @@
 'use client'
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine } from 'recharts'
+import { useChartColors } from '@/lib/useChartColors'
 
 interface IndexData {
   symbol: string
@@ -20,6 +21,7 @@ interface PriceChartProps {
 }
 
 export function PriceChart({ data, period }: PriceChartProps) {
+  const chartColors = useChartColors()
   const chartData = data
     .map(item => ({
       name: item.symbol,
@@ -33,8 +35,8 @@ export function PriceChart({ data, period }: PriceChartProps) {
     if (active && payload && payload.length) {
       const data = payload[0].payload
       return (
-        <div className="bg-gray-800 border border-gray-600 rounded-lg p-3 shadow-lg">
-          <p className="font-medium text-white">{data.fullName}</p>
+        <div className="theme-card border theme-border rounded-lg p-3 shadow-lg">
+          <p className="font-medium theme-text">{data.fullName}</p>
           <p className={`text-lg font-bold ${data.value >= 0 ? 'text-green-400' : 'text-red-400'}`}>
             {data.value >= 0 ? '+' : ''}{data.value.toFixed(1)}%
           </p>
@@ -45,20 +47,20 @@ export function PriceChart({ data, period }: PriceChartProps) {
   }
 
   return (
-    <div className="bg-gray-800 rounded-xl p-4 h-80">
+    <div className="theme-card rounded-xl p-4 h-80">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={chartData} layout="vertical" margin={{ left: 20, right: 30 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#374151" horizontal={true} vertical={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} horizontal={true} vertical={false} />
           <XAxis
             type="number"
-            tick={{ fill: '#9CA3AF', fontSize: 12 }}
-            tickFormatter={(value) => `${value}%`}
+            tick={{ fill: chartColors.axis, fontSize: 12 }}
+            tickFormatter={(value) => `${Number(value).toFixed(1)}%`}
             domain={['dataMin - 10', 'dataMax + 10']}
           />
           <YAxis
             type="category"
             dataKey="name"
-            tick={{ fill: '#9CA3AF', fontSize: 12 }}
+            tick={{ fill: chartColors.axis, fontSize: 12 }}
             width={80}
           />
           <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(55, 65, 81, 0.5)' }} />

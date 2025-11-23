@@ -75,19 +75,21 @@ export async function GET(request: Request) {
 
     const configMap = new Map(configs.map(c => [c.symbol, c]))
 
-    // Build response with metadata
-    const result = Object.entries(byIndex).map(([name, data]) => ({
-      indexName: name,
-      config: configMap.get(name),
-      dataPoints: data.length,
-      history: data.map(d => ({
-        timestamp: d.timestamp,
-        value: d.value,
-        returns1d: d.returns1d,
-        returns7d: d.returns7d,
-        returns30d: d.returns30d
+    // Build response with metadata - only include indexes with active configs
+    const result = Object.entries(byIndex)
+      .filter(([name]) => configMap.has(name)) // Only show indexes with active configs
+      .map(([name, data]) => ({
+        indexName: name,
+        config: configMap.get(name),
+        dataPoints: data.length,
+        history: data.map(d => ({
+          timestamp: d.timestamp,
+          value: d.value,
+          returns1d: d.returns1d,
+          returns7d: d.returns7d,
+          returns30d: d.returns30d
+        }))
       }))
-    }))
 
     return NextResponse.json({
       period,

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { useChartColors } from '@/lib/useChartColors'
 
 interface HistoryData {
   timestamp: string
@@ -26,6 +27,7 @@ export function HistoryChart({ className = '' }: HistoryChartProps) {
   const [data, setData] = useState<IndexHistory[]>([])
   const [period, setPeriod] = useState<string>('30d')
   const [loading, setLoading] = useState(true)
+  const chartColors = useChartColors()
 
   useEffect(() => {
     async function fetchHistory() {
@@ -84,8 +86,8 @@ export function HistoryChart({ className = '' }: HistoryChartProps) {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-gray-800 border border-gray-600 rounded-lg p-3 shadow-lg">
-          <p className="text-gray-400 text-sm mb-2">{label}</p>
+        <div className="theme-card border theme-border rounded-lg p-3 shadow-lg">
+          <p className="theme-text-secondary text-sm mb-2">{label}</p>
           {payload.map((entry: any, index: number) => {
             const isPositive = entry.value >= 0
             return (
@@ -107,9 +109,9 @@ export function HistoryChart({ className = '' }: HistoryChartProps) {
   const uniqueTimestamps = new Set(chartData.map(d => d.timestamp)).size
 
   return (
-    <div className={`bg-gray-800 rounded-xl p-4 ${className}`}>
+    <div className={`theme-card rounded-xl p-4 ${className}`}>
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold text-white">Index Performance History</h3>
+        <h3 className="text-lg font-semibold theme-text">Index Performance History</h3>
         <div className="flex gap-1 flex-wrap">
           {[
             { value: '7d', label: '7D' },
@@ -125,7 +127,7 @@ export function HistoryChart({ className = '' }: HistoryChartProps) {
               className={`px-3 py-1 rounded text-sm transition-colors ${
                 period === p.value
                   ? 'bg-blue-600 text-white'
-                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  : 'theme-btn'
               }`}
             >
               {p.label}
@@ -136,32 +138,32 @@ export function HistoryChart({ className = '' }: HistoryChartProps) {
 
       {loading ? (
         <div className="h-64 flex items-center justify-center">
-          <span className="text-gray-400">Loading...</span>
+          <span className="theme-text-secondary">Loading...</span>
         </div>
       ) : uniqueTimestamps <= 1 ? (
         <div className="h-64 flex flex-col items-center justify-center text-center px-4">
-          <span className="text-gray-400 mb-2">
+          <span className="theme-text-secondary mb-2">
             {uniqueTimestamps === 0
               ? "No historical data available yet."
               : "Only 1 data point collected so far."}
           </span>
-          <span className="text-gray-500 text-sm">
+          <span className="theme-text-muted text-sm">
             Click "Collect" daily to build price history. After a few days, you'll see performance trends here.
           </span>
-          <div className="mt-4 text-xs text-gray-600">
+          <div className="mt-4 text-xs theme-text-muted">
             Collections: {uniqueTimestamps} | Need 2+ for chart
           </div>
         </div>
       ) : (
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+            <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
             <XAxis
               dataKey="timestamp"
-              tick={{ fill: '#9CA3AF', fontSize: 12 }}
+              tick={{ fill: chartColors.axis, fontSize: 12 }}
             />
             <YAxis
-              tick={{ fill: '#9CA3AF', fontSize: 12 }}
+              tick={{ fill: chartColors.axis, fontSize: 12 }}
               tickFormatter={(value) => `${value >= 0 ? '+' : ''}${value.toFixed(0)}%`}
               domain={['auto', 'auto']}
             />

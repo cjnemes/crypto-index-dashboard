@@ -31,6 +31,7 @@ export const INDEX_TOKENS = {
     { symbol: 'OKB', name: 'OKB', sector: 'Exchange' },
     { symbol: 'WIF', name: 'dogwifhat', sector: 'Meme' },
     { symbol: 'ONDO', name: 'Ondo', sector: 'DeFi' },
+    { symbol: 'HYPE', name: 'Hyperliquid', sector: 'DEX' },
     // 26-50
     { symbol: 'IMX', name: 'Immutable', sector: 'Gaming' },
     { symbol: 'STX', name: 'Stacks', sector: 'Layer 2' },
@@ -106,7 +107,6 @@ export const INDEX_TOKENS = {
     { symbol: 'ONE', name: 'Harmony', sector: 'Layer 1' },
     { symbol: 'ZRX', name: '0x', sector: 'DeFi' },
     { symbol: 'ICX', name: 'ICON', sector: 'Layer 1' },
-    { symbol: 'AUDIO', name: 'Audius', sector: 'Music' },
     { symbol: 'API3', name: 'API3', sector: 'Oracle' },
     { symbol: 'AKT', name: 'Akash Network', sector: 'Compute' },
   ],
@@ -137,7 +137,133 @@ export const INDEX_TOKENS = {
     { symbol: 'AERO', name: 'Aerodrome', sector: 'DEX' },
     { symbol: 'LQTY', name: 'Liquity', sector: 'Stablecoin' },
     { symbol: 'PHAR', name: 'Pharaoh', sector: 'DEX' },
-    { symbol: 'SPELL', name: 'Spell Token', sector: 'Lending' },
+    { symbol: 'MORPHO', name: 'Morpho', sector: 'Lending' },
+    { symbol: 'HYPE', name: 'Hyperliquid', sector: 'DEX' },
+  ],
+
+  // ============================================================================
+  // SECTOR SUB-INDEXES (N100-aligned, minimum ~10 tokens each)
+  // ============================================================================
+
+  // Layer 1 - Base layer smart contract platforms (24 tokens from N100)
+  L1: [
+    { symbol: 'SOL', name: 'Solana', sector: 'Layer 1' },
+    { symbol: 'ADA', name: 'Cardano', sector: 'Layer 1' },
+    { symbol: 'TRX', name: 'TRON', sector: 'Layer 1' },
+    { symbol: 'TON', name: 'Toncoin', sector: 'Layer 1' },
+    { symbol: 'AVAX', name: 'Avalanche', sector: 'Layer 1' },
+    { symbol: 'NEAR', name: 'NEAR Protocol', sector: 'Layer 1' },
+    { symbol: 'SUI', name: 'Sui', sector: 'Layer 1' },
+    { symbol: 'APT', name: 'Aptos', sector: 'Layer 1' },
+    { symbol: 'ICP', name: 'Internet Computer', sector: 'Layer 1' },
+    { symbol: 'HBAR', name: 'Hedera', sector: 'Layer 1' },
+    { symbol: 'ALGO', name: 'Algorand', sector: 'Layer 1' },
+    { symbol: 'SEI', name: 'Sei', sector: 'Layer 1' },
+    { symbol: 'FLOW', name: 'Flow', sector: 'Layer 1' },
+    { symbol: 'EGLD', name: 'MultiversX', sector: 'Layer 1' },
+    { symbol: 'XTZ', name: 'Tezos', sector: 'Layer 1' },
+    { symbol: 'EOS', name: 'EOS', sector: 'Layer 1' },
+    { symbol: 'NEO', name: 'Neo', sector: 'Layer 1' },
+    { symbol: 'CFX', name: 'Conflux', sector: 'Layer 1' },
+    { symbol: 'ASTR', name: 'Astar', sector: 'Layer 1' },
+    { symbol: 'MINA', name: 'Mina', sector: 'Layer 1' },
+    { symbol: 'ZIL', name: 'Zilliqa', sector: 'Layer 1' },
+    { symbol: 'CELO', name: 'Celo', sector: 'Layer 1' },
+    { symbol: 'ONE', name: 'Harmony', sector: 'Layer 1' },
+    { symbol: 'ICX', name: 'ICON', sector: 'Layer 1' },
+  ],
+
+  // Scaling - L2s + Layer 0 interoperability (9 tokens from N100)
+  // Note: IMX moved to GAMING as it's gaming-focused
+  SCALE: [
+    // Layer 2s
+    { symbol: 'ARB', name: 'Arbitrum', sector: 'Layer 2' },
+    { symbol: 'OP', name: 'Optimism', sector: 'Layer 2' },
+    { symbol: 'STX', name: 'Stacks', sector: 'Layer 2' },
+    { symbol: 'MNT', name: 'Mantle', sector: 'Layer 2' },
+    { symbol: 'SKL', name: 'SKALE', sector: 'Layer 2' },
+    // Layer 0 / Interoperability
+    { symbol: 'DOT', name: 'Polkadot', sector: 'Layer 0' },
+    { symbol: 'ATOM', name: 'Cosmos', sector: 'Layer 0' },
+    { symbol: 'TIA', name: 'Celestia', sector: 'Layer 0' },
+    { symbol: 'KSM', name: 'Kusama', sector: 'Layer 0' },
+  ],
+
+  // AI & Compute - AI, GPU, Compute, IoT (10 tokens from N100/INFRA)
+  AI: [
+    { symbol: 'TAO', name: 'Bittensor', sector: 'AI' },
+    { symbol: 'FET', name: 'Fetch.ai', sector: 'AI' },
+    { symbol: 'RENDER', name: 'Render', sector: 'GPU' },
+    { symbol: 'AKT', name: 'Akash Network', sector: 'Compute' },
+    { symbol: 'THETA', name: 'Theta Network', sector: 'Video' },
+    { symbol: 'LPT', name: 'Livepeer', sector: 'Video' },
+    { symbol: 'IOTX', name: 'IoTeX', sector: 'IoT' },
+    { symbol: 'HNT', name: 'Helium', sector: 'IoT' },
+    { symbol: 'IOTA', name: 'IOTA', sector: 'IoT' },
+    { symbol: 'ANKR', name: 'Ankr', sector: 'RPC' },
+  ],
+
+  // Gaming & NFT - Gaming, Metaverse, NFT (8 tokens from N100)
+  GAMING: [
+    { symbol: 'IMX', name: 'Immutable', sector: 'Gaming' },
+    { symbol: 'AXS', name: 'Axie Infinity', sector: 'Gaming' },
+    { symbol: 'SAND', name: 'The Sandbox', sector: 'Gaming' },
+    { symbol: 'MANA', name: 'Decentraland', sector: 'Gaming' },
+    { symbol: 'GALA', name: 'Gala', sector: 'Gaming' },
+    { symbol: 'ENJ', name: 'Enjin Coin', sector: 'Gaming' },
+    { symbol: 'APE', name: 'ApeCoin', sector: 'NFT' },
+    { symbol: 'BLUR', name: 'Blur', sector: 'NFT' },
+  ],
+
+  // DEX - Decentralized Exchanges (11 tokens from DEFI index)
+  DEX: [
+    { symbol: 'UNI', name: 'Uniswap', sector: 'DEX' },
+    { symbol: 'CRV', name: 'Curve', sector: 'DEX' },
+    { symbol: 'CAKE', name: 'PancakeSwap', sector: 'DEX' },
+    { symbol: 'SUSHI', name: 'SushiSwap', sector: 'DEX' },
+    { symbol: 'BAL', name: 'Balancer', sector: 'DEX' },
+    { symbol: 'ZRX', name: '0x', sector: 'DEX' },
+    { symbol: 'JOE', name: 'Trader Joe', sector: 'DEX' },
+    { symbol: 'AERO', name: 'Aerodrome', sector: 'DEX' },
+    { symbol: 'PHAR', name: 'Pharaoh', sector: 'DEX' },
+    { symbol: 'HYPE', name: 'Hyperliquid', sector: 'DEX' },
+    { symbol: '1INCH', name: '1inch', sector: 'Aggregator' },
+  ],
+
+  // Yield - Lending, Derivatives, Staking (12 tokens from DEFI index)
+  YIELD: [
+    // Lending
+    { symbol: 'AAVE', name: 'Aave', sector: 'Lending' },
+    { symbol: 'COMP', name: 'Compound', sector: 'Lending' },
+    { symbol: 'MKR', name: 'Maker', sector: 'Lending' },
+    { symbol: 'KAVA', name: 'Kava', sector: 'Lending' },
+    { symbol: 'MORPHO', name: 'Morpho', sector: 'Lending' },
+    // Derivatives
+    { symbol: 'SNX', name: 'Synthetix', sector: 'Derivatives' },
+    { symbol: 'DYDX', name: 'dYdX', sector: 'Derivatives' },
+    { symbol: 'GMX', name: 'GMX', sector: 'Derivatives' },
+    // Staking & Yield
+    { symbol: 'LDO', name: 'Lido DAO', sector: 'Staking' },
+    { symbol: 'RPL', name: 'Rocket Pool', sector: 'Staking' },
+    { symbol: 'PENDLE', name: 'Pendle', sector: 'Yield' },
+    { symbol: 'YFI', name: 'yearn.finance', sector: 'Yield' },
+  ],
+
+  // Data - Oracles, Storage, Indexing (10 tokens from INFRA index)
+  DATA: [
+    // Oracles
+    { symbol: 'LINK', name: 'Chainlink', sector: 'Oracle' },
+    { symbol: 'PYTH', name: 'Pyth Network', sector: 'Oracle' },
+    { symbol: 'API3', name: 'API3', sector: 'Oracle' },
+    { symbol: 'BAND', name: 'Band Protocol', sector: 'Oracle' },
+    // Storage
+    { symbol: 'FIL', name: 'Filecoin', sector: 'Storage' },
+    { symbol: 'AR', name: 'Arweave', sector: 'Storage' },
+    { symbol: 'STORJ', name: 'Storj', sector: 'Storage' },
+    // Indexing & Data
+    { symbol: 'GRT', name: 'The Graph', sector: 'Indexing' },
+    { symbol: 'OCEAN', name: 'Ocean Protocol', sector: 'Data' },
+    { symbol: 'ENS', name: 'Ethereum Name Service', sector: 'Identity' },
   ],
 
   // Infrastructure 25 - Blockchain infrastructure tokens
@@ -162,7 +288,6 @@ export const INDEX_TOKENS = {
     { symbol: 'API3', name: 'API3', sector: 'Oracle' },
     { symbol: 'BAND', name: 'Band Protocol', sector: 'Oracle' },
     { symbol: 'AKT', name: 'Akash Network', sector: 'Compute' },
-    { symbol: 'AUDIO', name: 'Audius', sector: 'Music' },
     { symbol: 'NKN', name: 'NKN', sector: 'Network' },
     { symbol: 'SC', name: 'Siacoin', sector: 'Storage' },
     { symbol: 'GLM', name: 'Golem', sector: 'Compute' },
@@ -183,15 +308,25 @@ export const INDEX_INCEPTION_DATE = '2024-11-25'
 export const INDEX_BASE_VALUE = 1000
 
 // Index configurations
+// Note: Equal-weighted (EW) indexes deprecated Nov 2024 in favor of MCW-only strategy
 export const INDEX_CONFIGS = [
+  // Benchmarks
   { symbol: 'BTC', name: 'Bitcoin', methodology: 'BENCHMARK', baseIndex: 'BTC', tokenCount: 1, color: '#F7931A' },
   { symbol: 'ETH', name: 'Ethereum', methodology: 'BENCHMARK', baseIndex: 'ETH', tokenCount: 1, color: '#627EEA' },
-  { symbol: 'N100-MCW', name: 'Nemes 100 MCW', methodology: 'MCW', baseIndex: 'N100', tokenCount: 100, color: '#00D395' },
-  { symbol: 'N100-EW', name: 'Nemes 100 EW', methodology: 'EW', baseIndex: 'N100', tokenCount: 100, color: '#00A67E' },
-  { symbol: 'DEFI-MCW', name: 'DeFi 25 MCW', methodology: 'MCW', baseIndex: 'DEFI', tokenCount: 25, color: '#9B59B6' },
-  { symbol: 'DEFI-EW', name: 'DeFi 25 EW', methodology: 'EW', baseIndex: 'DEFI', tokenCount: 25, color: '#8E44AD' },
-  { symbol: 'INFRA-MCW', name: 'Infra 25 MCW', methodology: 'MCW', baseIndex: 'INFRA', tokenCount: 25, color: '#3498DB' },
-  { symbol: 'INFRA-EW', name: 'Infra 25 EW', methodology: 'EW', baseIndex: 'INFRA', tokenCount: 25, color: '#2980B9' },
+
+  // Core Indexes
+  { symbol: 'N100-MCW', name: 'Nemes 100', methodology: 'MCW', baseIndex: 'N100', tokenCount: 100, color: '#00D395' },
+  { symbol: 'DEFI-MCW', name: 'DeFi 26', methodology: 'MCW', baseIndex: 'DEFI', tokenCount: 26, color: '#9B59B6' },
+  { symbol: 'INFRA-MCW', name: 'Infra 24', methodology: 'MCW', baseIndex: 'INFRA', tokenCount: 24, color: '#3498DB' },
+
+  // Sector Sub-Indexes (added Nov 2024)
+  { symbol: 'L1-MCW', name: 'Layer 1', methodology: 'MCW', baseIndex: 'L1', tokenCount: 24, color: '#E74C3C', parent: 'N100' },
+  { symbol: 'SCALE-MCW', name: 'Scaling', methodology: 'MCW', baseIndex: 'SCALE', tokenCount: 9, color: '#E67E22', parent: 'N100' },
+  { symbol: 'AI-MCW', name: 'AI & Compute', methodology: 'MCW', baseIndex: 'AI', tokenCount: 10, color: '#1ABC9C', parent: 'INFRA' },
+  { symbol: 'GAMING-MCW', name: 'Gaming', methodology: 'MCW', baseIndex: 'GAMING', tokenCount: 8, color: '#9B59B6', parent: 'N100' },
+  { symbol: 'DEX-MCW', name: 'DEX', methodology: 'MCW', baseIndex: 'DEX', tokenCount: 11, color: '#FF6B9D', parent: 'DEFI' },
+  { symbol: 'YIELD-MCW', name: 'Yield', methodology: 'MCW', baseIndex: 'YIELD', tokenCount: 12, color: '#3498DB', parent: 'DEFI' },
+  { symbol: 'DATA-MCW', name: 'Data', methodology: 'MCW', baseIndex: 'DATA', tokenCount: 10, color: '#27AE60', parent: 'INFRA' },
 ]
 
 /**
@@ -223,16 +358,51 @@ export function getAllTokenSymbols(): string[] {
     ...INDEX_TOKENS.N100,
     ...INDEX_TOKENS.DEFI,
     ...INDEX_TOKENS.INFRA,
+    // Sector sub-indexes (most overlap with above, but includes any extras)
+    ...INDEX_TOKENS.L1,
+    ...INDEX_TOKENS.SCALE,
+    ...INDEX_TOKENS.AI,
+    ...INDEX_TOKENS.GAMING,
+    ...INDEX_TOKENS.DEX,
+    ...INDEX_TOKENS.YIELD,
+    ...INDEX_TOKENS.DATA,
   ]
   return [...new Set(allTokens.map(t => t.symbol))]
 }
 
 // Get token count summary
 export function getTokenCounts() {
-  const n100 = INDEX_TOKENS.N100.length
-  const defi = INDEX_TOKENS.DEFI.length
-  const infra = INDEX_TOKENS.INFRA.length
-  const unique = getAllTokenSymbols().length
+  return {
+    // Core indexes
+    n100: INDEX_TOKENS.N100.length,
+    defi: INDEX_TOKENS.DEFI.length,
+    infra: INDEX_TOKENS.INFRA.length,
+    // Sector sub-indexes
+    l1: INDEX_TOKENS.L1.length,
+    scale: INDEX_TOKENS.SCALE.length,
+    ai: INDEX_TOKENS.AI.length,
+    gaming: INDEX_TOKENS.GAMING.length,
+    dex: INDEX_TOKENS.DEX.length,
+    yield: INDEX_TOKENS.YIELD.length,
+    data: INDEX_TOKENS.DATA.length,
+    // Total unique
+    unique: getAllTokenSymbols().length,
+  }
+}
 
-  return { n100, defi, infra, unique }
+// Get tokens for a specific index
+export function getIndexTokens(baseIndex: string) {
+  const indexMap: Record<string, typeof INDEX_TOKENS.N100> = {
+    N100: INDEX_TOKENS.N100,
+    DEFI: INDEX_TOKENS.DEFI,
+    INFRA: INDEX_TOKENS.INFRA,
+    L1: INDEX_TOKENS.L1,
+    SCALE: INDEX_TOKENS.SCALE,
+    AI: INDEX_TOKENS.AI,
+    GAMING: INDEX_TOKENS.GAMING,
+    DEX: INDEX_TOKENS.DEX,
+    YIELD: INDEX_TOKENS.YIELD,
+    DATA: INDEX_TOKENS.DATA,
+  }
+  return indexMap[baseIndex] || []
 }

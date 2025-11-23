@@ -8,9 +8,18 @@ async function main() {
 
   // Seed token configurations
   const allTokens = [
+    // Core indexes
     ...INDEX_TOKENS.N100.map(t => ({ ...t, indexes: 'N100' })),
     ...INDEX_TOKENS.DEFI.map(t => ({ ...t, indexes: 'DEFI' })),
     ...INDEX_TOKENS.INFRA.map(t => ({ ...t, indexes: 'INFRA' })),
+    // Sector sub-indexes
+    ...INDEX_TOKENS.L1.map(t => ({ ...t, indexes: 'L1' })),
+    ...INDEX_TOKENS.SCALE.map(t => ({ ...t, indexes: 'SCALE' })),
+    ...INDEX_TOKENS.AI.map(t => ({ ...t, indexes: 'AI' })),
+    ...INDEX_TOKENS.GAMING.map(t => ({ ...t, indexes: 'GAMING' })),
+    ...INDEX_TOKENS.DEX.map(t => ({ ...t, indexes: 'DEX' })),
+    ...INDEX_TOKENS.YIELD.map(t => ({ ...t, indexes: 'YIELD' })),
+    ...INDEX_TOKENS.DATA.map(t => ({ ...t, indexes: 'DATA' })),
   ]
 
   // Deduplicate and merge indexes
@@ -34,6 +43,8 @@ async function main() {
   console.log(`Seeded ${tokenMap.size} tokens`)
 
   // Seed index configurations
+  const activeIndexSymbols = INDEX_CONFIGS.map(i => i.symbol)
+
   for (const index of INDEX_CONFIGS) {
     await prisma.indexConfig.upsert({
       where: { symbol: index.symbol },
@@ -54,6 +65,17 @@ async function main() {
       },
     })
   }
+
+  // Remove deprecated index configs (EW indexes removed Nov 2024)
+  const deprecated = await prisma.indexConfig.deleteMany({
+    where: {
+      symbol: { notIn: activeIndexSymbols }
+    }
+  })
+  if (deprecated.count > 0) {
+    console.log(`Removed ${deprecated.count} deprecated index configurations`)
+  }
+
   console.log(`Seeded ${INDEX_CONFIGS.length} index configurations`)
 
   console.log('Seeding complete!')

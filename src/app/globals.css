@@ -2,10 +2,35 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
+/* Dark theme (default) */
+:root,
+.dark {
   --foreground-rgb: 255, 255, 255;
   --background-start-rgb: 17, 24, 39;
   --background-end-rgb: 31, 41, 55;
+  --card-bg: 31, 41, 55;
+  --card-hover: 55, 65, 81;
+  --text-primary: 255, 255, 255;
+  --text-secondary: 156, 163, 175;
+  --text-muted: 107, 114, 128;
+  --border-color: 75, 85, 99;
+  --chart-grid: #374151;
+  --chart-axis: #9CA3AF;
+}
+
+/* Light theme */
+.light {
+  --foreground-rgb: 17, 24, 39;
+  --background-start-rgb: 249, 250, 251;
+  --background-end-rgb: 243, 244, 246;
+  --card-bg: 255, 255, 255;
+  --card-hover: 243, 244, 246;
+  --text-primary: 17, 24, 39;
+  --text-secondary: 75, 85, 99;
+  --text-muted: 156, 163, 175;
+  --border-color: 229, 231, 235;
+  --chart-grid: #E5E7EB;
+  --chart-axis: #6B7280;
 }
 
 body {
@@ -17,22 +42,122 @@ body {
     )
     rgb(var(--background-start-rgb));
   min-height: 100vh;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
+/* Theme-aware utility classes */
+.theme-card {
+  background-color: rgb(var(--card-bg));
+  transition: background-color 0.3s ease;
+}
+
+.theme-card-hover:hover {
+  background-color: rgb(var(--card-hover));
+}
+
+.theme-text {
+  color: rgb(var(--text-primary));
+}
+
+.theme-text-secondary {
+  color: rgb(var(--text-secondary));
+}
+
+.theme-text-muted {
+  color: rgb(var(--text-muted));
+}
+
+.theme-border {
+  border-color: rgb(var(--border-color));
+}
+
+/* Inner card/item backgrounds */
+.theme-item {
+  background-color: rgb(var(--card-hover));
+}
+
+/* Button backgrounds for inactive state */
+.theme-btn {
+  background-color: rgb(var(--card-hover));
+  color: rgb(var(--text-secondary));
+}
+
+.theme-btn:hover {
+  background-color: rgb(var(--border-color));
+}
+
+/* Table header */
+.theme-table-header {
+  background-color: rgb(var(--card-hover));
+}
+
+/* Custom scrollbar - dark */
+.dark ::-webkit-scrollbar {
   width: 8px;
 }
 
-::-webkit-scrollbar-track {
+.dark ::-webkit-scrollbar-track {
   background: #1f2937;
 }
 
-::-webkit-scrollbar-thumb {
+.dark ::-webkit-scrollbar-thumb {
   background: #4b5563;
   border-radius: 4px;
 }
 
-::-webkit-scrollbar-thumb:hover {
+.dark ::-webkit-scrollbar-thumb:hover {
   background: #6b7280;
+}
+
+/* Custom scrollbar - light */
+.light ::-webkit-scrollbar {
+  width: 8px;
+}
+
+.light ::-webkit-scrollbar-track {
+  background: #f3f4f6;
+}
+
+.light ::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+
+.light ::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Mobile improvements */
+@media (max-width: 768px) {
+  .mobile-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-tap {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Larger touch targets on mobile */
+  button, a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Responsive text */
+.text-responsive-sm {
+  @apply text-xs sm:text-sm;
+}
+
+.text-responsive-base {
+  @apply text-sm sm:text-base;
+}
+
+.text-responsive-lg {
+  @apply text-lg sm:text-xl md:text-2xl;
+}
+
+.text-responsive-xl {
+  @apply text-xl sm:text-2xl md:text-3xl lg:text-4xl;
 }

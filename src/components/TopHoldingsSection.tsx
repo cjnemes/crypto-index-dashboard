@@ -62,11 +62,11 @@ export default function TopHoldingsSection() {
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="bg-gray-800 rounded-xl p-4 animate-pulse">
-            <div className="h-6 bg-gray-700 rounded w-1/2 mb-4"></div>
+          <div key={i} className="theme-card rounded-xl p-4 animate-pulse">
+            <div className="h-6 theme-item rounded w-1/2 mb-4"></div>
             <div className="space-y-3">
               {[1, 2, 3, 4, 5].map((j) => (
-                <div key={j} className="h-8 bg-gray-700 rounded"></div>
+                <div key={j} className="h-8 theme-item rounded"></div>
               ))}
             </div>
           </div>
@@ -82,13 +82,13 @@ export default function TopHoldingsSection() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       {indexData.map((index) => (
-        <div key={index.symbol} className="bg-gray-800 rounded-xl overflow-hidden">
+        <div key={index.symbol} className="theme-card rounded-xl overflow-hidden">
           <div
-            className="px-4 py-3 border-b border-gray-700 flex items-center justify-between"
+            className="px-4 py-3 border-b theme-border flex items-center justify-between"
             style={{ borderLeftWidth: '4px', borderLeftColor: index.color }}
           >
             <div className="flex items-center gap-2">
-              <span className="font-semibold text-white">{index.name}</span>
+              <span className="font-semibold theme-text">{index.name}</span>
             </div>
             <Link
               href={`/index/${encodeURIComponent(index.symbol)}`}
@@ -103,12 +103,12 @@ export default function TopHoldingsSection() {
               const maxWeight = index.holdings[0]?.weight || 1
               return (
                 <div key={holding.symbol} className="flex items-center gap-3">
-                  <span className="w-5 text-sm text-gray-500 font-medium">
+                  <span className="w-5 text-sm theme-text-muted font-medium">
                     {idx + 1}
                   </span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <span className="font-medium text-white text-sm">{holding.symbol}</span>
+                      <span className="font-medium theme-text text-sm">{holding.symbol}</span>
                       <span className={`text-xs font-medium ${
                         holding.change24h >= 0 ? 'text-green-400' : 'text-red-400'
                       }`}>
@@ -116,7 +116,7 @@ export default function TopHoldingsSection() {
                       </span>
                     </div>
                     <div className="flex items-center gap-2 mt-1">
-                      <div className="flex-1 h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                      <div className="flex-1 h-1.5 theme-item rounded-full overflow-hidden">
                         <div
                           className="h-full rounded-full"
                           style={{
@@ -125,7 +125,7 @@ export default function TopHoldingsSection() {
                           }}
                         />
                       </div>
-                      <span className="text-xs text-gray-400 w-12 text-right">
+                      <span className="text-xs theme-text-secondary w-12 text-right">
                         {formatWeight(holding.weight)}
                       </span>
                     </div>

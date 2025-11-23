@@ -33,20 +33,20 @@ export function PerformanceTable({ benchmarks, indexes }: PerformanceTableProps)
   const sortedData = [...allData].sort((a, b) => b.returns['1Y'] - a.returns['1Y'])
 
   return (
-    <div className="bg-gray-800 rounded-xl overflow-hidden">
+    <div className="theme-card rounded-xl overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="bg-gray-700">
-              <th className="text-left p-4 text-gray-300 font-medium">Rank</th>
-              <th className="text-left p-4 text-gray-300 font-medium">Index</th>
+            <tr className="theme-table-header">
+              <th className="text-left p-4 theme-text-secondary font-medium">Rank</th>
+              <th className="text-left p-4 theme-text-secondary font-medium">Index</th>
               {periods.map(period => (
-                <th key={period} className="text-right p-4 text-gray-300 font-medium">
+                <th key={period} className="text-right p-4 theme-text-secondary font-medium">
                   {period}
                 </th>
               ))}
-              <th className="text-right p-4 text-gray-300 font-medium">vs BTC (1Y)</th>
-              <th className="text-right p-4 text-gray-300 font-medium">vs ETH (1Y)</th>
+              <th className="text-right p-4 theme-text-secondary font-medium">vs BTC (1Y)</th>
+              <th className="text-right p-4 theme-text-secondary font-medium">vs ETH (1Y)</th>
             </tr>
           </thead>
           <tbody>
@@ -59,11 +59,11 @@ export function PerformanceTable({ benchmarks, indexes }: PerformanceTableProps)
               return (
                 <tr
                   key={item.symbol}
-                  className={`border-t border-gray-700 hover:bg-gray-750 ${
-                    benchmarks.includes(item) ? 'bg-gray-750' : ''
+                  className={`border-t theme-border hover:theme-item ${
+                    benchmarks.includes(item) ? 'theme-item' : ''
                   }`}
                 >
-                  <td className="p-4 text-gray-400">{index + 1}</td>
+                  <td className="p-4 theme-text-secondary">{index + 1}</td>
                   <td className="p-4">
                     <div className="flex items-center gap-3">
                       <div
@@ -71,8 +71,8 @@ export function PerformanceTable({ benchmarks, indexes }: PerformanceTableProps)
                         style={{ backgroundColor: item.color }}
                       />
                       <div>
-                        <p className="font-medium text-white">{item.name}</p>
-                        <p className="text-xs text-gray-500">{item.symbol}</p>
+                        <p className="font-medium theme-text">{item.name}</p>
+                        <p className="text-xs theme-text-muted">{item.symbol}</p>
                       </div>
                     </div>
                   </td>

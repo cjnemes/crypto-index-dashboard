@@ -13,9 +13,18 @@ const INDEX_INCEPTION_DATE = '2024-11-25'
 const INDEX_BASE_VALUE = 1000
 
 const INDEX_TOKENS: Record<string, string[]> = {
-  N100: ['BNB', 'XRP', 'SOL', 'ADA', 'DOGE', 'TRX', 'TON', 'AVAX', 'SHIB', 'DOT', 'LINK', 'XMR', 'NEAR', 'SUI', 'APT', 'UNI', 'ICP', 'PEPE', 'FET', 'RENDER', 'ATOM', 'XLM', 'OKB', 'WIF', 'ONDO', 'IMX', 'STX', 'TAO', 'FIL', 'ARB', 'CRO', 'HBAR', 'MNT', 'OP', 'VET', 'INJ', 'MKR', 'AAVE', 'GRT', 'RUNE', 'THETA', 'AR', 'ALGO', 'SEI', 'AERO', 'BONK', 'FLOW', 'PYTH', 'TIA', 'EGLD', 'AXS', 'SAND', 'MANA', 'XTZ', 'EOS', 'SNX', 'GALA', 'LDO', 'NEO', 'KAVA', 'QNT', 'CFX', 'WLD', 'ASTR', 'BLUR', 'APE', 'DYDX', 'ROSE', 'CHZ', 'CRV', 'MINA', 'ZIL', 'ENJ', 'CAKE', 'IOTA', 'GMX', 'COMP', 'ZEC', '1INCH', 'ENS', 'RPL', 'OCEAN', 'LPT', 'ANKR', 'BAT', 'SKL', 'STORJ', 'CELO', 'YFI', 'BAL', 'SUSHI', 'HNT', 'KSM', 'IOTX', 'ONE', 'ZRX', 'ICX', 'AUDIO', 'API3', 'AKT'],
-  DEFI: ['UNI', 'AAVE', 'MKR', 'LDO', 'INJ', 'RUNE', 'SNX', 'CRV', 'DYDX', 'GMX', 'COMP', '1INCH', 'CAKE', 'RPL', 'YFI', 'BAL', 'SUSHI', 'ZRX', 'KAVA', 'PENDLE', 'JOE', 'AERO', 'LQTY', 'PHAR', 'SPELL'],
-  INFRA: ['LINK', 'RENDER', 'GRT', 'FIL', 'AR', 'TAO', 'FET', 'THETA', 'PYTH', 'QNT', 'OCEAN', 'LPT', 'ANKR', 'ENS', 'STORJ', 'HNT', 'IOTX', 'API3', 'BAND', 'AKT', 'AUDIO', 'NKN', 'SC', 'GLM', 'FLUX']
+  // Core indexes
+  N100: ['BNB', 'XRP', 'SOL', 'ADA', 'DOGE', 'TRX', 'TON', 'AVAX', 'SHIB', 'DOT', 'LINK', 'XMR', 'NEAR', 'SUI', 'APT', 'UNI', 'ICP', 'PEPE', 'FET', 'RENDER', 'ATOM', 'XLM', 'OKB', 'WIF', 'ONDO', 'HYPE', 'IMX', 'STX', 'TAO', 'FIL', 'ARB', 'CRO', 'HBAR', 'MNT', 'OP', 'VET', 'INJ', 'MKR', 'AAVE', 'GRT', 'RUNE', 'THETA', 'AR', 'ALGO', 'SEI', 'AERO', 'BONK', 'FLOW', 'PYTH', 'TIA', 'EGLD', 'AXS', 'SAND', 'MANA', 'XTZ', 'EOS', 'SNX', 'GALA', 'LDO', 'NEO', 'KAVA', 'QNT', 'CFX', 'WLD', 'ASTR', 'BLUR', 'APE', 'DYDX', 'ROSE', 'CHZ', 'CRV', 'MINA', 'ZIL', 'ENJ', 'CAKE', 'IOTA', 'GMX', 'COMP', 'ZEC', '1INCH', 'ENS', 'RPL', 'OCEAN', 'LPT', 'ANKR', 'BAT', 'SKL', 'STORJ', 'CELO', 'YFI', 'BAL', 'SUSHI', 'HNT', 'KSM', 'IOTX', 'ONE', 'ZRX', 'ICX', 'API3', 'AKT'],
+  DEFI: ['UNI', 'AAVE', 'MKR', 'LDO', 'INJ', 'RUNE', 'SNX', 'CRV', 'DYDX', 'GMX', 'COMP', '1INCH', 'CAKE', 'RPL', 'YFI', 'BAL', 'SUSHI', 'ZRX', 'KAVA', 'PENDLE', 'JOE', 'AERO', 'LQTY', 'PHAR', 'MORPHO', 'HYPE'],
+  INFRA: ['LINK', 'RENDER', 'GRT', 'FIL', 'AR', 'TAO', 'FET', 'THETA', 'PYTH', 'QNT', 'OCEAN', 'LPT', 'ANKR', 'ENS', 'STORJ', 'HNT', 'IOTX', 'API3', 'BAND', 'AKT', 'NKN', 'SC', 'GLM', 'FLUX'],
+  // Sector sub-indexes
+  L1: ['SOL', 'ADA', 'TRX', 'TON', 'AVAX', 'NEAR', 'SUI', 'APT', 'ICP', 'HBAR', 'ALGO', 'SEI', 'FLOW', 'EGLD', 'XTZ', 'EOS', 'NEO', 'CFX', 'ASTR', 'MINA', 'ZIL', 'CELO', 'ONE', 'ICX'],
+  SCALE: ['ARB', 'OP', 'STX', 'MNT', 'SKL', 'DOT', 'ATOM', 'TIA', 'KSM'],
+  AI: ['TAO', 'FET', 'RENDER', 'AKT', 'THETA', 'LPT', 'IOTX', 'HNT', 'IOTA', 'ANKR'],
+  GAMING: ['IMX', 'AXS', 'SAND', 'MANA', 'GALA', 'ENJ', 'APE', 'BLUR'],
+  DEX: ['UNI', 'CRV', 'CAKE', 'SUSHI', 'BAL', 'ZRX', 'JOE', 'AERO', 'PHAR', 'HYPE', '1INCH'],
+  YIELD: ['AAVE', 'COMP', 'MKR', 'KAVA', 'MORPHO', 'SNX', 'DYDX', 'GMX', 'LDO', 'RPL', 'PENDLE', 'YFI'],
+  DATA: ['LINK', 'PYTH', 'API3', 'BAND', 'FIL', 'AR', 'STORJ', 'GRT', 'OCEAN', 'ENS']
 }
 
 interface CMCQuote {

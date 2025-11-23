@@ -25,7 +25,7 @@ export function TokenList({ tokens }: TokenListProps) {
   }
 
   return (
-    <div className="bg-gray-800 rounded-xl p-4 h-80 overflow-hidden">
+    <div className="theme-card rounded-xl p-4 h-80 overflow-hidden">
       <div className="grid grid-cols-2 gap-4 h-full">
         {/* Top Performers */}
         <div>
@@ -37,20 +37,20 @@ export function TokenList({ tokens }: TokenListProps) {
             {topPerformers.map((token, index) => (
               <div
                 key={token.symbol}
-                className="flex items-center justify-between bg-gray-700 rounded-lg p-2"
+                className="flex items-center justify-between theme-item rounded-lg p-2"
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-500 w-4">{index + 1}</span>
+                  <span className="text-xs theme-text-muted w-4">{index + 1}</span>
                   <div>
-                    <p className="text-sm font-medium text-white">{token.symbol}</p>
-                    <p className="text-xs text-gray-500">{token.sector}</p>
+                    <p className="text-sm font-medium theme-text">{token.symbol}</p>
+                    <p className="text-xs theme-text-muted">{token.sector}</p>
                   </div>
                 </div>
                 <div className="text-right">
                   <p className={`text-sm font-mono ${token.change1Y >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                     {token.change1Y >= 0 ? '+' : ''}{token.change1Y.toFixed(1)}%
                   </p>
-                  <p className="text-xs text-gray-500">{formatPrice(token.price)}</p>
+                  <p className="text-xs theme-text-muted">{formatPrice(token.price)}</p>
                 </div>
               </div>
             ))}
@@ -67,20 +67,20 @@ export function TokenList({ tokens }: TokenListProps) {
             {bottomPerformers.map((token, index) => (
               <div
                 key={token.symbol}
-                className="flex items-center justify-between bg-gray-700 rounded-lg p-2"
+                className="flex items-center justify-between theme-item rounded-lg p-2"
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-500 w-4">{tokens.length - index}</span>
+                  <span className="text-xs theme-text-muted w-4">{tokens.length - index}</span>
                   <div>
-                    <p className="text-sm font-medium text-white">{token.symbol}</p>
-                    <p className="text-xs text-gray-500">{token.sector}</p>
+                    <p className="text-sm font-medium theme-text">{token.symbol}</p>
+                    <p className="text-xs theme-text-muted">{token.sector}</p>
                   </div>
                 </div>
                 <div className="text-right">
                   <p className={`text-sm font-mono ${token.change1Y >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                     {token.change1Y >= 0 ? '+' : ''}{token.change1Y.toFixed(1)}%
                   </p>
-                  <p className="text-xs text-gray-500">{formatPrice(token.price)}</p>
+                  <p className="text-xs theme-text-muted">{formatPrice(token.price)}</p>
                 </div>
               </div>
             ))}

@@ -8,6 +8,7 @@ import { TokenList } from '@/components/TokenList'
 import { HistoryChart } from '@/components/HistoryChart'
 import TopHoldingsSection from '@/components/TopHoldingsSection'
 import { RefreshCw, TrendingUp, TrendingDown, Database } from 'lucide-react'
+import { ThemeToggle } from '@/components/ThemeToggle'
 
 // Fallback static data (used if database is empty)
 const fallbackData = {
@@ -16,12 +17,9 @@ const fallbackData = {
     { symbol: 'ETH', name: 'Ethereum', returns: { '24H': 0, '1M': -27.9, '3M': -43.2, '6M': 3.0, '1Y': -17.6 }, color: '#627EEA' },
   ],
   indexes: [
-    { symbol: 'N100-MCW', name: 'Nemes 100 MCW', returns: { '24H': 0, '1M': -18.4, '3M': -32.6, '6M': -12.8, '1Y': 8.6 }, color: '#00D395', components: 100 },
-    { symbol: 'N100-EW', name: 'Nemes 100 EW', returns: { '24H': 0, '1M': -28.4, '3M': -48.2, '6M': -32.6, '1Y': -28.6 }, color: '#00A67E', components: 100 },
-    { symbol: 'DEFI-MCW', name: 'DeFi 25 MCW', returns: { '24H': 0, '1M': -26.4, '3M': -48.2, '6M': -32.4, '1Y': -18.4 }, color: '#9B59B6', components: 25 },
-    { symbol: 'DEFI-EW', name: 'DeFi 25 EW', returns: { '24H': 0, '1M': -32.4, '3M': -52.6, '6M': -38.4, '1Y': -24.6 }, color: '#8E44AD', components: 25 },
-    { symbol: 'INFRA-MCW', name: 'Infra 25 MCW', returns: { '24H': 0, '1M': -30.0, '3M': -55.0, '6M': -28.1, '1Y': -38.4 }, color: '#3498DB', components: 25 },
-    { symbol: 'INFRA-EW', name: 'Infra 25 EW', returns: { '24H': 0, '1M': -38.4, '3M': -62.4, '6M': -42.6, '1Y': -48.6 }, color: '#2980B9', components: 25 },
+    { symbol: 'N100-MCW', name: 'Nemes 100', returns: { '24H': 0, '1M': -18.4, '3M': -32.6, '6M': -12.8, '1Y': 8.6 }, color: '#00D395', components: 100 },
+    { symbol: 'DEFI-MCW', name: 'DeFi 25', returns: { '24H': 0, '1M': -26.4, '3M': -48.2, '6M': -32.4, '1Y': -18.4 }, color: '#9B59B6', components: 25 },
+    { symbol: 'INFRA-MCW', name: 'Infra 25', returns: { '24H': 0, '1M': -30.0, '3M': -55.0, '6M': -28.1, '1Y': -38.4 }, color: '#3498DB', components: 25 },
   ]
 }
 
@@ -149,19 +147,19 @@ export default function Home() {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
         <div>
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
+          <h1 className="text-3xl md:text-4xl font-bold theme-text mb-2">
             Crypto Index Dashboard
           </h1>
-          <p className="text-gray-400">
+          <p className="theme-text-secondary">
             Track Nemes 100, DeFi 25, and Infrastructure 25 indexes vs BTC/ETH
           </p>
         </div>
         <div className="flex items-center gap-4 mt-4 md:mt-0">
-          <div className="flex items-center gap-2 text-sm text-gray-500">
+          <div className="flex items-center gap-2 text-sm theme-text-muted">
             <Database className="w-4 h-4" />
             <span>{dataSource === 'database' ? 'Live' : 'Static'} Data</span>
           </div>
-          <span className="text-sm text-gray-500">
+          <span className="text-sm theme-text-muted">
             Updated: {lastUpdated}
           </span>
           <button
@@ -181,12 +179,13 @@ export default function Home() {
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </button>
+          <ThemeToggle />
         </div>
       </div>
 
       {/* Benchmark Cards */}
       <div className="mb-8">
-        <h2 className="text-xl font-semibold text-gray-300 mb-4">Benchmarks</h2>
+        <h2 className="text-xl font-semibold theme-text-secondary mb-4">Benchmarks</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {benchmarks.map((item) => (
             <IndexCard key={item.symbol} data={item} isBenchmark />
@@ -194,31 +193,45 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Index Cards */}
+      {/* Core Index Cards */}
       <div className="mb-8">
-        <h2 className="text-xl font-semibold text-gray-300 mb-4">Index Performance</h2>
+        <h2 className="text-xl font-semibold theme-text-secondary mb-4">Core Indexes</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {indexes.map((item) => (
-            <IndexCard key={item.symbol} data={item} />
-          ))}
+          {indexes
+            .filter(i => ['N100-MCW', 'DEFI-MCW', 'INFRA-MCW'].includes(i.symbol))
+            .map((item) => (
+              <IndexCard key={item.symbol} data={item} />
+            ))}
+        </div>
+      </div>
+
+      {/* Sector Sub-Indexes */}
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold theme-text-secondary mb-4">Sector Sub-Indexes</h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {indexes
+            .filter(i => !['N100-MCW', 'DEFI-MCW', 'INFRA-MCW'].includes(i.symbol))
+            .map((item) => (
+              <IndexCard key={item.symbol} data={item} compact />
+            ))}
         </div>
       </div>
 
       {/* Top Holdings Preview */}
       <div className="mb-8">
-        <h2 className="text-xl font-semibold text-gray-300 mb-4">Top Holdings by Index</h2>
+        <h2 className="text-xl font-semibold theme-text-secondary mb-4">Top Holdings by Index</h2>
         <TopHoldingsSection />
       </div>
 
       {/* History Chart */}
       <div className="mb-8">
-        <h2 className="text-xl font-semibold text-gray-300 mb-4">Historical Performance</h2>
+        <h2 className="text-xl font-semibold theme-text-secondary mb-4">Historical Performance</h2>
         <HistoryChart />
       </div>
 
       {/* Performance Comparison Table */}
       <div className="mb-8">
-        <h2 className="text-xl font-semibold text-gray-300 mb-4">Performance Comparison</h2>
+        <h2 className="text-xl font-semibold theme-text-secondary mb-4">Performance Comparison</h2>
         <PerformanceTable
           benchmarks={benchmarks}
           indexes={indexes}
@@ -228,48 +241,48 @@ export default function Home() {
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         <div>
-          <h2 className="text-xl font-semibold text-gray-300 mb-4">1-Year Returns</h2>
+          <h2 className="text-xl font-semibold theme-text-secondary mb-4">1-Year Returns</h2>
           <PriceChart data={[...benchmarks, ...indexes]} period="1Y" />
         </div>
         <div>
-          <h2 className="text-xl font-semibold text-gray-300 mb-4">Top/Bottom Performers</h2>
+          <h2 className="text-xl font-semibold theme-text-secondary mb-4">Top/Bottom Performers</h2>
           <TokenList tokens={tokens} />
         </div>
       </div>
 
       {/* Key Insights */}
-      <div className="bg-gray-800 rounded-xl p-6 mb-8">
-        <h2 className="text-xl font-semibold text-white mb-4">Key Insights</h2>
+      <div className="theme-card rounded-xl p-6 mb-8">
+        <h2 className="text-xl font-semibold theme-text mb-4">Key Insights</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div className="bg-gray-700 rounded-lg p-4">
+          <div className="theme-item rounded-lg p-4">
             <div className="flex items-center gap-2 mb-2">
               <TrendingUp className="w-5 h-5 text-green-400" />
               <span className="font-medium text-green-400">Best Performer</span>
             </div>
-            <p className="text-2xl font-bold text-white">{bestPerformer?.name}</p>
-            <p className="text-gray-400">
+            <p className="text-2xl font-bold theme-text">{bestPerformer?.name}</p>
+            <p className="theme-text-secondary">
               {bestPerformer?.returns['1Y'] >= 0 ? '+' : ''}{bestPerformer?.returns['1Y'].toFixed(1)}% (1Y)
             </p>
           </div>
-          <div className="bg-gray-700 rounded-lg p-4">
+          <div className="theme-item rounded-lg p-4">
             <div className="flex items-center gap-2 mb-2">
               <TrendingUp className="w-5 h-5 text-blue-400" />
               <span className="font-medium text-blue-400">vs Bitcoin</span>
             </div>
-            <p className="text-2xl font-bold text-white">
+            <p className="text-2xl font-bold theme-text">
               {bestPerformer && btcReturn
                 ? `${(bestPerformer.returns['1Y'] - btcReturn) >= 0 ? '+' : ''}${(bestPerformer.returns['1Y'] - btcReturn).toFixed(1)}%`
                 : 'N/A'}
             </p>
-            <p className="text-gray-400">{bestPerformer?.name} outperformance</p>
+            <p className="theme-text-secondary">{bestPerformer?.name} outperformance</p>
           </div>
-          <div className="bg-gray-700 rounded-lg p-4">
+          <div className="theme-item rounded-lg p-4">
             <div className="flex items-center gap-2 mb-2">
               <TrendingDown className="w-5 h-5 text-red-400" />
               <span className="font-medium text-red-400">Worst Performer</span>
             </div>
-            <p className="text-2xl font-bold text-white">{worstPerformer?.name}</p>
-            <p className="text-gray-400">
+            <p className="text-2xl font-bold theme-text">{worstPerformer?.name}</p>
+            <p className="theme-text-secondary">
               {worstPerformer?.returns['1Y'] >= 0 ? '+' : ''}{worstPerformer?.returns['1Y'].toFixed(1)}% (1Y)
             </p>
           </div>
@@ -277,7 +290,7 @@ export default function Home() {
       </div>
 
       {/* Footer */}
-      <footer className="text-center text-gray-500 text-sm">
+      <footer className="text-center theme-text-muted text-sm">
         <p>Data from CoinMarketCap Pro API | {dataSource === 'database' ? 'Live database' : 'Static snapshot'}</p>
         <p className="mt-1">This dashboard is for informational purposes only. Not investment advice.</p>
       </footer>
