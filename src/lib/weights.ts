@@ -1,8 +1,34 @@
 /**
  * Weight calculation utilities for index constituents
+ *
+ * Implements Capped Market Cap Weighted (MCW) methodology following industry standards:
+ * - 25% maximum weight per constituent (aligned with DeFi Pulse Index & RIC rules)
+ * - Excess weight redistributed proportionally to uncapped constituents
+ * - Iterative capping until all weights within limits
+ *
+ * References:
+ * - DeFi Pulse Index: 25% cap (https://indexcoop.com/blog/defi-pulse-index-methodology)
+ * - SEC RIC Diversification: 25% max single position
+ * - S&P Capped Indices: Various caps with proportional redistribution
  */
 
 import { INDEX_CONFIGS, getIndexTokens as getTokensForIndex } from './tokens'
+
+// ============================================================================
+// Configuration Constants
+// ============================================================================
+
+/**
+ * Maximum weight any single constituent can have in a capped index
+ * Industry standard for sector indexes (DeFi Pulse Index uses 25%)
+ * Also aligns with SEC RIC diversification requirements
+ */
+export const MAX_CONSTITUENT_WEIGHT = 0.25 // 25%
+
+/**
+ * Maximum iterations for weight redistribution to prevent infinite loops
+ */
+const MAX_CAPPING_ITERATIONS = 10
 
 export interface ConstituentWithWeight {
   symbol: string
@@ -38,14 +64,28 @@ export function getIndexTokens(indexSymbol: string): { symbol: string; name: str
 }
 
 /**
- * Calculate MCW (Market Cap Weighted) weights
- * Weight = token market cap / total market cap of all tokens
+ * Calculate Capped MCW (Market Cap Weighted) weights
+ *
+ * Implements industry-standard capped market cap weighting:
+ * 1. Calculate initial weights based on market cap
+ * 2. Cap any constituent exceeding MAX_CONSTITUENT_WEIGHT (25%)
+ * 3. Redistribute excess weight proportionally to uncapped constituents
+ * 4. Repeat until all weights are within limits
+ *
+ * This methodology follows DeFi Pulse Index standards and ensures
+ * diversification while still respecting market cap ranking.
+ *
+ * @param tokens - Array of token definitions
+ * @param priceData - Map of current price/market cap data
+ * @param maxWeight - Optional custom cap (defaults to MAX_CONSTITUENT_WEIGHT)
+ * @returns Array of constituents with capped weights
  */
 export function calculateMCWWeights(
   tokens: { symbol: string; name: string; sector: string }[],
-  priceData: Map<string, { price: number; marketCap: number; volume24h: number; change24h: number }>
+  priceData: Map<string, { price: number; marketCap: number; volume24h: number; change24h: number }>,
+  maxWeight: number = MAX_CONSTITUENT_WEIGHT
 ): ConstituentWithWeight[] {
-  // Get market caps for all tokens
+  // Get market caps for all tokens with valid data
   const tokenData: { token: typeof tokens[0]; data: { price: number; marketCap: number; volume24h: number; change24h: number } }[] = []
   let totalMarketCap = 0
 
@@ -57,8 +97,12 @@ export function calculateMCWWeights(
     }
   }
 
-  // Calculate weights and sort by market cap
-  const constituents = tokenData
+  if (tokenData.length === 0 || totalMarketCap === 0) {
+    return []
+  }
+
+  // Build initial constituents with uncapped market cap weights
+  const constituents: ConstituentWithWeight[] = tokenData
     .map(({ token, data }) => ({
       symbol: token.symbol,
       name: token.name,
@@ -67,17 +111,96 @@ export function calculateMCWWeights(
       marketCap: data.marketCap,
       volume24h: data.volume24h,
       change24h: data.change24h,
-      weight: totalMarketCap > 0 ? data.marketCap / totalMarketCap : 0,
+      weight: data.marketCap / totalMarketCap,
       rank: 0
     }))
     .sort((a, b) => b.marketCap - a.marketCap)
 
-  // Assign ranks
+  // Apply iterative capping algorithm
+  applyWeightCaps(constituents, maxWeight)
+
+  // Assign final ranks (by original market cap, not capped weight)
   constituents.forEach((c, i) => {
     c.rank = i + 1
   })
 
   return constituents
+}
+
+/**
+ * Apply weight caps iteratively until all constituents are within limits
+ *
+ * Algorithm:
+ * 1. Find all constituents exceeding the cap
+ * 2. Cap them at maxWeight
+ * 3. Calculate total excess weight to redistribute
+ * 4. Redistribute excess proportionally to uncapped constituents
+ * 5. Repeat if redistribution causes new breaches
+ *
+ * @param constituents - Array of constituents (modified in place)
+ * @param maxWeight - Maximum allowed weight (0-1)
+ */
+function applyWeightCaps(constituents: ConstituentWithWeight[], maxWeight: number): void {
+  for (let iteration = 0; iteration < MAX_CAPPING_ITERATIONS; iteration++) {
+    // Find constituents that exceed the cap
+    const capped: ConstituentWithWeight[] = []
+    const uncapped: ConstituentWithWeight[] = []
+
+    for (const c of constituents) {
+      if (c.weight > maxWeight) {
+        capped.push(c)
+      } else {
+        uncapped.push(c)
+      }
+    }
+
+    // If nothing exceeds cap, we're done
+    if (capped.length === 0) {
+      return
+    }
+
+    // Calculate total excess weight to redistribute
+    let excessWeight = 0
+    for (const c of capped) {
+      excessWeight += c.weight - maxWeight
+      c.weight = maxWeight // Cap it
+    }
+
+    // If no uncapped constituents to redistribute to, we're done
+    // (edge case: all constituents are at or above cap)
+    if (uncapped.length === 0) {
+      return
+    }
+
+    // Calculate total weight of uncapped constituents (for proportional redistribution)
+    const uncappedTotalWeight = uncapped.reduce((sum, c) => sum + c.weight, 0)
+
+    if (uncappedTotalWeight === 0) {
+      // Edge case: distribute equally if all uncapped have zero weight
+      const equalShare = excessWeight / uncapped.length
+      for (const c of uncapped) {
+        c.weight += equalShare
+      }
+    } else {
+      // Redistribute excess weight proportionally to uncapped constituents
+      for (const c of uncapped) {
+        const proportion = c.weight / uncappedTotalWeight
+        c.weight += excessWeight * proportion
+      }
+    }
+
+    // Verify weights still sum to 1 (floating point safety)
+    const totalWeight = constituents.reduce((sum, c) => sum + c.weight, 0)
+    if (Math.abs(totalWeight - 1) > 0.0001) {
+      // Normalize to ensure weights sum to 1
+      for (const c of constituents) {
+        c.weight = c.weight / totalWeight
+      }
+    }
+  }
+
+  // If we hit max iterations, log a warning (shouldn't happen with reasonable data)
+  console.warn(`Weight capping reached max iterations (${MAX_CAPPING_ITERATIONS})`)
 }
 
 /**
