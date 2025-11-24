@@ -1,9 +1,9 @@
 # Product Requirements Document (PRD)
 # Crypto Index Dashboard - "Nemes Index Platform"
 
-**Version:** 1.0
-**Date:** November 22, 2024
-**Status:** Draft
+**Version:** 0.9
+**Date:** November 24, 2024
+**Status:** Pre-Release
 
 ---
 
@@ -36,78 +36,91 @@ The Nemes Index Platform is a professional-grade cryptocurrency index tracking a
 
 ### Core Indexes
 
-| Index | Description | Tokens | Methodology Options |
-|-------|-------------|--------|---------------------|
-| **N100** | Top 100 cryptocurrencies (ex-benchmarks) | 100 | MCW, EW |
-| **DeFi 25** | Leading DeFi protocols | 25 | MCW, EW |
-| **Infra 25** | Blockchain infrastructure tokens | 25 | MCW, EW |
+| Index | Description | Tokens | Methodology |
+|-------|-------------|--------|-------------|
+| **N100-MCW** | Top 100 cryptocurrencies (ex-benchmarks) | 100 | Capped MCW (25%) |
+| **DEFI-MCW** | Leading DeFi protocols | 25 | Capped MCW (25%) |
+| **INFRA-MCW** | Blockchain infrastructure tokens | 25 | Capped MCW (25%) |
 | **BTC** | Bitcoin benchmark | 1 | Price |
 | **ETH** | Ethereum benchmark | 1 | Price |
 
+### Sector Sub-Indexes (Added Nov 2024)
+
+| Index | Description | Tokens | Parent |
+|-------|-------------|--------|--------|
+| **L1-MCW** | Layer 1 platforms | 24 | N100 |
+| **SCALE-MCW** | L2s + Interoperability | 9 | N100 |
+| **AI-MCW** | AI, GPU, Compute, IoT | 10 | INFRA |
+| **GAMING-MCW** | Gaming, Metaverse, NFT | 8 | N100 |
+| **DEX-MCW** | Decentralized Exchanges | 11 | DEFI |
+| **YIELD-MCW** | Lending, Derivatives, Staking | 11 | DEFI |
+| **DATA-MCW** | Oracles, Storage, Indexing | 10 | INFRA |
+
 ### Methodology Definitions
-- **MCW (Market Cap Weighted)**: Constituent weights based on market capitalization
-- **EW (Equal Weighted)**: Each constituent has equal weight (rebalanced)
+- **Capped MCW**: Market cap weighted with 25% max per constituent (industry standard)
 - **BENCHMARK**: Direct price tracking for reference assets
+
+> **Note**: Equal-weighted (EW) indexes were deprecated in favor of a simpler MCW-only strategy.
 
 ---
 
 ## Feature Requirements
 
-### P0 - Must Have (MVP Completion)
+### P0 - Must Have (MVP Completion) ✅ COMPLETE
 
-#### 1. Index Detail Pages
+#### 1. Index Detail Pages ✅
 **User Story**: As an investor, I want to click on any index to see its constituent tokens and their weights so I can understand what I'm tracking.
 
 **Requirements**:
-- [ ] Individual page for each index at `/index/[symbol]`
-- [ ] Display all constituent tokens in a sortable table
-- [ ] Show for each token:
+- [x] Individual page for each index at `/index/[symbol]`
+- [x] Display all constituent tokens in a sortable table
+- [x] Show for each token:
   - Symbol, Name
   - Current price
   - 24h change (%)
-  - Weight in index (for MCW)
+  - Weight in index (capped MCW)
   - Market cap
   - Sector/category
-- [ ] Index performance chart (standalone)
-- [ ] Index metadata (methodology, token count, last rebalance)
+- [x] Index performance chart (standalone)
+- [x] Index metadata (methodology, token count)
 
-#### 2. Constituent Transparency Widget
+#### 2. Constituent Transparency Widget ✅
 **User Story**: As an investor, I want to see top holdings at a glance without navigating to detail pages.
 
 **Requirements**:
-- [ ] "Top 5 Holdings" preview on dashboard for each index
-- [ ] Weight percentage bars
-- [ ] Click-through to full constituent list
+- [x] "Top Holdings" preview on dashboard for each index
+- [x] Weight percentage bars
+- [x] Click-through to full constituent list
 
-#### 3. Navigation & Information Architecture
+#### 3. Navigation & Information Architecture ✅
 **User Story**: As a user, I want intuitive navigation between dashboard overview and detailed views.
 
 **Requirements**:
-- [ ] Clickable index cards/rows on main dashboard
-- [ ] Breadcrumb navigation on detail pages
-- [ ] Tab navigation for different index views (chart, constituents, stats)
+- [x] Clickable index cards on main dashboard
+- [x] Navigation from index cards to detail pages
+- [x] Tab navigation for different index views
 
-#### 4. Mobile Responsiveness
+#### 4. Mobile Responsiveness ✅
 **User Story**: As a mobile user, I want to view index performance on my phone.
 
 **Requirements**:
-- [ ] Responsive chart sizing
-- [ ] Mobile-optimized data tables (horizontal scroll or card view)
-- [ ] Touch-friendly interactions
+- [x] Responsive chart sizing
+- [x] Mobile-optimized layout
+- [x] Touch-friendly interactions
 
 ---
 
-### P1 - Should Have (Enhanced Analytics)
+### P1 - Should Have (Enhanced Analytics) - MOSTLY COMPLETE
 
-#### 5. Risk Metrics Dashboard
+#### 5. Risk Metrics Dashboard ✅
 **User Story**: As an analyst, I want to see standard risk metrics to evaluate index performance quality.
 
 **Requirements**:
-- [ ] Volatility (30-day, 90-day annualized)
-- [ ] Sharpe Ratio (vs risk-free rate)
-- [ ] Max Drawdown (with date)
+- [x] Volatility (30-day, 90-day annualized)
+- [x] Sharpe Ratio (vs risk-free rate)
+- [x] Max Drawdown (with date)
 - [ ] Sortino Ratio
-- [ ] Beta vs BTC
+- [x] Beta vs BTC
 - [ ] Correlation matrix between indexes
 
 #### 6. Performance Attribution
@@ -116,13 +129,13 @@ The Nemes Index Platform is a professional-grade cryptocurrency index tracking a
 **Requirements**:
 - [ ] Top/bottom 5 contributors to daily performance
 - [ ] Sector breakdown chart
-- [ ] Weight drift visualization (actual vs target for EW)
+- [x] Constituent weights visualization
 
-#### 7. Time Period Selection
+#### 7. Time Period Selection ✅
 **User Story**: As an analyst, I want to analyze specific time periods.
 
 **Requirements**:
-- [ ] Preset periods: 1D, 7D, 1M, 3M, 6M, 1Y, YTD, ALL
+- [x] Preset periods: 7D, 30D, 90D, 1Y, ALL
 - [ ] Custom date range picker
 - [ ] Period-over-period comparison
 
@@ -130,9 +143,8 @@ The Nemes Index Platform is a professional-grade cryptocurrency index tracking a
 **User Story**: As an investor, I want to compare multiple indexes on the same chart.
 
 **Requirements**:
-- [ ] Multi-select checkboxes for indexes
+- [x] Multi-index chart (all indexes overlaid)
 - [ ] Normalized view (rebased to 100)
-- [ ] Overlay or split-panel modes
 - [ ] Export comparison data
 
 ---
@@ -309,11 +321,11 @@ model RiskMetrics {
 
 ## Success Metrics
 
-### Launch Metrics (MVP)
-- Page load time < 2 seconds
-- All 8 indexes displaying correctly
-- Mobile-usable without horizontal scroll issues
-- Zero data staleness > 1 hour
+### Launch Metrics (MVP) ✅ MET
+- Page load time < 2 seconds ✅
+- All 12 indexes displaying correctly ✅
+- Mobile-usable without horizontal scroll issues ✅
+- Zero data staleness > 1 hour ✅
 
 ### Growth Metrics (3 months)
 - User time on site > 3 minutes average
@@ -384,4 +396,4 @@ model RiskMetrics {
 ---
 
 *Document maintained by: Development Team*
-*Last updated: November 22, 2024*
+*Last updated: November 24, 2024*

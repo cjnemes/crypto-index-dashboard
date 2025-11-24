@@ -329,26 +329,28 @@ export const INDEX_CONFIGS = [
 ]
 
 /**
- * INDEX METHODOLOGY (following S&P/Dow Jones standards)
- * =====================================================
+ * INDEX METHODOLOGY (following S&P/Dow Jones and MSCI standards)
+ * ==============================================================
  *
- * MCW (Market Cap Weighted) - like S&P 500:
- *   Index = Total_Market_Cap / Divisor
- *   Divisor = Baseline_Total_Market_Cap / INDEX_BASE_VALUE
+ * CAPPED MCW (Capped Market Cap Weighted) - like MSCI Capped Indexes:
+ *   1. Calculate raw weights from market caps
+ *   2. Apply 25% cap - no single constituent > 25%
+ *   3. Redistribute excess weight proportionally to uncapped constituents
+ *   4. Calculate shares at inception using capped weights
+ *   5. Index = Sum(Shares × Current_Price) / Divisor
  *
- *   Example: If baseline total mcap = $677B and base value = 1000
- *   Divisor = $677B / 1000 = $677M
- *   If today's total mcap = $650B, Index = $650B / $677M = 960.1
+ *   Example: If token has 40% raw weight with 25% cap:
+ *   - Cap at 25%, redistribute 15% to other constituents proportionally
  *
- * EW (Equal Weighted) - like S&P 500 Equal Weight:
- *   At inception, each token gets equal dollar allocation
- *   "Shares" per token = (Notional_Investment / N) / Price_at_baseline
- *   Index = Sum(Price_today × Shares) / Divisor
- *
- *   This ensures each token's % move contributes equally to index returns
+ *   Why capping?
+ *   - Industry standard (DeFi Pulse Index, MSCI Capped Indexes)
+ *   - SEC RIC diversification rules require max 25% concentration
+ *   - Prevents single token domination of index returns
  *
  * BENCHMARK:
  *   Raw price of the asset (BTC, ETH) - no divisor needed
+ *
+ * NOTE: Equal-weighted (EW) indexes deprecated Nov 2024 in favor of MCW-only.
  */
 
 // Get all unique token symbols for API calls

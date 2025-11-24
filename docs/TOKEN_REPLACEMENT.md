@@ -164,3 +164,20 @@ git push
 - The index divisor will change slightly when tokens are replaced (different market caps at inception)
 - Historical index values are recalculated from inception date (2024-11-25)
 - Tokens can be in multiple indexes (e.g., AERO is in both N100 and DEFI)
+- All MCW indexes use **25% capped market cap weighting**
+
+## Recalculating Historical Snapshots
+
+If you need to recalculate all historical index snapshots (e.g., after methodology changes):
+
+```bash
+# Run the recalculation script
+npx tsx scripts/recalculate-capped-indexes.ts
+
+# This will:
+# 1. Calculate capped weights at inception for each MCW index
+# 2. Determine fixed shares for each constituent
+# 3. Recalculate all historical snapshots using: Index = Sum(Shares × Price) / Divisor
+```
+
+The script processes all MCW indexes and updates any snapshots where the recalculated value differs by more than 0.01%.

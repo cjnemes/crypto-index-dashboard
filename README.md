@@ -4,26 +4,24 @@ A Next.js dashboard for tracking cryptocurrency index performance against BTC an
 
 ## Index Methodology
 
-This dashboard uses **divisor-based methodology** similar to the S&P 500 and Dow Jones Industrial Average, providing professional-grade index calculation.
+This dashboard uses **capped market cap weighted (MCW) methodology** similar to MSCI Capped Indexes and the DeFi Pulse Index, providing professional-grade index calculation with diversification.
 
 ### Key Parameters
 - **Inception Date**: November 25, 2024
 - **Base Value**: 1000 (all indexes start at this value)
+- **Weight Cap**: 25% maximum per constituent
 - **Data Source**: CoinMarketCap Pro API
 - **Update Frequency**: Daily snapshots at 12:00 UTC
 
-### Calculation Methods
+### Calculation Method
 
-**Market Cap Weighted (MCW)**
+**Capped Market Cap Weighted (MCW)**
 ```
-Index Value = Total Market Cap of Constituents / Divisor
-Divisor = Total Market Cap at Inception / 1000
-```
-
-**Equal Weighted (EW)**
-```
-Index Value = Sum(Token Price × Token Shares) / Divisor
-Shares calculated at inception based on equal dollar allocation
+1. Calculate raw weights from market caps
+2. Cap any constituent exceeding 25%
+3. Redistribute excess weight proportionally to uncapped constituents
+4. Calculate shares at inception using capped weights
+5. Index Value = Sum(Shares × Current Price) / Divisor
 ```
 
 For complete methodology documentation, see [docs/INDEX_METHODOLOGY.md](docs/INDEX_METHODOLOGY.md).
@@ -40,16 +38,29 @@ For complete methodology documentation, see [docs/INDEX_METHODOLOGY.md](docs/IND
 
 ## Indexes Tracked
 
+### Core Indexes
+
 | Index | Description | Tokens |
 |-------|-------------|--------|
-| **N100-MCW** | Nemes 100, market cap weighted | 100 |
-| **N100-EW** | Nemes 100, equal weighted | 100 |
-| **DEFI-MCW** | DeFi 25, market cap weighted | 25 |
-| **DEFI-EW** | DeFi 25, equal weighted | 25 |
-| **INFRA-MCW** | Infrastructure 25, market cap weighted | 25 |
-| **INFRA-EW** | Infrastructure 25, equal weighted | 25 |
+| **N100-MCW** | Nemes 100 - Top 100 altcoins | 100 |
+| **DEFI-MCW** | DeFi 25 - Top DeFi protocols | 25 |
+| **INFRA-MCW** | Infra 25 - Infrastructure tokens | 25 |
+
+### Sector Sub-Indexes
+
+| Index | Description | Tokens | Parent |
+|-------|-------------|--------|--------|
+| **L1-MCW** | Layer 1 smart contract platforms | 24 | N100 |
+| **SCALE-MCW** | L2s + Layer 0 interoperability | 9 | N100 |
+| **AI-MCW** | AI, GPU, Compute, IoT | 10 | INFRA |
+| **GAMING-MCW** | Gaming, Metaverse, NFT | 8 | N100 |
+| **DEX-MCW** | Decentralized Exchanges | 11 | DEFI |
+| **YIELD-MCW** | Lending, Derivatives, Staking | 11 | DEFI |
+| **DATA-MCW** | Oracles, Storage, Indexing | 10 | INFRA |
 
 **Benchmarks**: BTC (Bitcoin) and ETH (Ethereum)
+
+All indexes use 25% capped market cap weighting.
 
 ## Quick Start
 

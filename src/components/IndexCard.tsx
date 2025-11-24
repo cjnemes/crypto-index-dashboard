@@ -51,6 +51,13 @@ export function IndexCard({ data, isBenchmark = false, compact = false }: IndexC
             <h3 className="text-sm font-semibold theme-text">{data.name}</h3>
             <span className="text-xs theme-text-muted">{data.components}</span>
           </div>
+          {/* Index Value */}
+          {data.currentValue !== undefined && (
+            <div className="mb-1">
+              <span className="text-base font-bold theme-text">{formatValue(data.currentValue)}</span>
+              <span className="text-xs theme-text-muted ml-1.5">Index</span>
+            </div>
+          )}
           <div className="flex items-center gap-1 mb-2">
             {isPositive ? (
               <TrendingUp className="w-4 h-4 text-green-400" />

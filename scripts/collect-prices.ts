@@ -6,6 +6,82 @@ const prisma = new PrismaClient()
 const CMC_API_KEY = process.env.CMC_API_KEY || ''
 const CMC_BASE_URL = 'https://pro-api.coinmarketcap.com/v2'
 
+// ============================================================================
+// CAPPED MARKET CAP WEIGHTING
+// ============================================================================
+
+/**
+ * Maximum weight any single constituent can have in a capped index
+ * Industry standard: 25% (DeFi Pulse Index, SEC RIC rules)
+ */
+const MAX_CONSTITUENT_WEIGHT = 0.25
+const MAX_CAPPING_ITERATIONS = 10
+
+/**
+ * Calculate capped weights from market caps
+ * Implements iterative redistribution algorithm
+ */
+function calculateCappedWeights(
+  marketCaps: Map<string, number>,
+  maxWeight: number = MAX_CONSTITUENT_WEIGHT
+): Map<string, number> {
+  let totalMarketCap = 0
+  for (const mc of marketCaps.values()) {
+    totalMarketCap += mc
+  }
+
+  if (totalMarketCap === 0) return new Map()
+
+  const weights = new Map<string, number>()
+  for (const [symbol, mc] of marketCaps) {
+    weights.set(symbol, mc / totalMarketCap)
+  }
+
+  // Apply iterative capping
+  for (let iteration = 0; iteration < MAX_CAPPING_ITERATIONS; iteration++) {
+    const capped: string[] = []
+    const uncapped: string[] = []
+
+    for (const [symbol, weight] of weights) {
+      if (weight > maxWeight) capped.push(symbol)
+      else uncapped.push(symbol)
+    }
+
+    if (capped.length === 0) break
+
+    let excessWeight = 0
+    for (const symbol of capped) {
+      excessWeight += weights.get(symbol)! - maxWeight
+      weights.set(symbol, maxWeight)
+    }
+
+    if (uncapped.length === 0) break
+
+    let uncappedTotal = 0
+    for (const symbol of uncapped) {
+      uncappedTotal += weights.get(symbol)!
+    }
+
+    if (uncappedTotal > 0) {
+      for (const symbol of uncapped) {
+        const w = weights.get(symbol)!
+        weights.set(symbol, w + excessWeight * (w / uncappedTotal))
+      }
+    }
+
+    // Normalize
+    let total = 0
+    for (const w of weights.values()) total += w
+    if (Math.abs(total - 1) > 0.0001) {
+      for (const [symbol, w] of weights) {
+        weights.set(symbol, w / total)
+      }
+    }
+  }
+
+  return weights
+}
+
 interface CMCQuote {
   symbol: string
   name: string
@@ -130,8 +206,9 @@ async function main() {
     })
     const inceptionPriceMap = new Map(inceptionPrices.map(p => [p.symbol, p]))
 
-    // Calculate MCW divisors and EW baseline shares
+    // Calculate MCW divisors (with capping) and EW baseline shares
     const mcwDivisors = new Map<string, number>()
+    const mcwShares = new Map<string, Map<string, number>>() // Shares per token for capped MCW
     const ewBaselineShares = new Map<string, Map<string, number>>()
     const ewDivisors = new Map<string, number>()
 
@@ -142,14 +219,38 @@ async function main() {
       const indexTokens = INDEX_TOKENS[indexKey] || []
 
       if (indexConfig.methodology === 'MCW') {
-        let totalMarketCap = 0
+        // Build market cap map for capped weight calculation
+        const marketCapMap = new Map<string, number>()
+        const priceMapForIndex = new Map<string, number>()
         for (const token of indexTokens) {
           const price = inceptionPriceMap.get(token.symbol)
-          if (price && price.marketCap > 0) {
-            totalMarketCap += price.marketCap
+          if (price && price.marketCap > 0 && price.price > 0) {
+            marketCapMap.set(token.symbol, price.marketCap)
+            priceMapForIndex.set(token.symbol, price.price)
           }
         }
-        mcwDivisors.set(indexConfig.symbol, totalMarketCap / INDEX_BASE_VALUE)
+
+        // Calculate capped weights (25% max)
+        const cappedWeights = calculateCappedWeights(marketCapMap)
+
+        // Calculate shares based on capped weights using $1M notional
+        const notionalInvestment = 1_000_000
+        const tokenShares = new Map<string, number>()
+        let portfolioValue = 0
+
+        for (const token of indexTokens) {
+          const weight = cappedWeights.get(token.symbol)
+          const price = priceMapForIndex.get(token.symbol)
+          if (weight && price && weight > 0 && price > 0) {
+            const investment = notionalInvestment * weight
+            const shares = investment / price
+            tokenShares.set(token.symbol, shares)
+            portfolioValue += shares * price
+          }
+        }
+
+        mcwShares.set(indexConfig.symbol, tokenShares)
+        mcwDivisors.set(indexConfig.symbol, portfolioValue / INDEX_BASE_VALUE)
 
       } else if (indexConfig.methodology === 'EW') {
         const tokenShares = new Map<string, number>()
@@ -225,17 +326,19 @@ async function main() {
         const indexTokens = INDEX_TOKENS[indexKey] || []
 
         if (index.methodology === 'MCW') {
-          // MCW: Index = Total Market Cap / Divisor
+          // MCW with capping: Index = Sum(Shares × Price) / Divisor
+          const shares = mcwShares.get(index.symbol)
           const divisor = mcwDivisors.get(index.symbol)
-          if (divisor && divisor > 0) {
-            let totalMarketCap = 0
+          if (shares && divisor && divisor > 0) {
+            let portfolioValue = 0
             for (const token of indexTokens) {
+              const tokenShares = shares.get(token.symbol)
               const price = todayPriceMap.get(token.symbol)
-              if (price && price.quote.USD.market_cap > 0) {
-                totalMarketCap += price.quote.USD.market_cap
+              if (tokenShares && price && price.quote.USD.price > 0) {
+                portfolioValue += tokenShares * price.quote.USD.price
               }
             }
-            indexValue = totalMarketCap / divisor
+            indexValue = portfolioValue / divisor
           }
 
         } else if (index.methodology === 'EW') {

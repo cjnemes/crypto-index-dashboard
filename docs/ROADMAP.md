@@ -1,16 +1,26 @@
 # Crypto Index Dashboard Roadmap
 
-## Current Status (v1.0)
+## Current Status (v0.9 - Pre-Release)
 
 ### Completed
-- [x] Core index calculation engine (MCW + EW methodologies)
-- [x] 8 indexes: BTC, ETH, N100-MCW, N100-EW, DEFI-MCW, DEFI-EW, INFRA-MCW, INFRA-EW
+- [x] Core index calculation engine with **capped MCW methodology** (25% max weight)
+- [x] 12 indexes total:
+  - 2 Benchmarks: BTC, ETH
+  - 3 Core: N100-MCW, DEFI-MCW, INFRA-MCW
+  - 7 Sector Sub-Indexes: L1, SCALE, AI, GAMING, DEX, YIELD, DATA
 - [x] Historical data backfill (12 months)
 - [x] Daily price collection via CoinMarketCap API
 - [x] Docker containerization with persistent database
 - [x] Security hardening (headers, API key protection)
 - [x] Interactive dashboard with charts
 - [x] Index detail pages with constituent breakdown
+- [x] Capped weight limits (25% max per constituent)
+- [x] Sector sub-indexes for granular market exposure
+- [x] Risk metrics (volatility, Sharpe ratio, max drawdown, beta)
+- [x] Dark/light theme support
+
+### Deprecated
+- Equal-weighted (EW) indexes - removed in favor of MCW-only strategy
 
 ---
 
@@ -38,14 +48,15 @@
 ## Phase 3: Enhanced Analytics
 
 ### Performance Metrics
-- [ ] Sharpe ratio calculation
-- [ ] Volatility metrics (30d, 90d, 1Y)
-- [ ] Max drawdown tracking
+- [x] Sharpe ratio calculation ✅
+- [x] Volatility metrics (30d, 90d, 1Y) ✅
+- [x] Max drawdown tracking ✅
+- [x] Beta vs BTC ✅
 - [ ] Rolling returns (7d, 30d, 90d)
 
 ### Comparison Tools
-- [ ] Side-by-side index comparison
-- [ ] Benchmark comparisons (vs BTC, ETH, S&P 500)
+- [x] Benchmark comparisons (vs BTC, ETH) ✅
+- [ ] Side-by-side index comparison chart
 - [ ] Correlation matrix between indexes
 
 ### Portfolio Simulation
@@ -58,8 +69,8 @@
 ## Phase 4: UI/UX Improvements
 
 ### Dashboard Enhancements
-- [ ] Dark mode support
-- [ ] Customizable date ranges
+- [x] Dark mode support ✅
+- [x] Customizable date ranges ✅
 - [ ] Mobile-responsive improvements
 - [ ] Real-time price updates (WebSocket)
 
@@ -117,11 +128,15 @@
 ## Future Considerations
 
 ### New Index Types
-- [ ] Layer 1 Index
-- [ ] Layer 2 Index
-- [ ] AI/ML Token Index
-- [ ] Gaming/Metaverse Index
+- [x] Layer 1 Index (L1-MCW) ✅
+- [x] Layer 2 / Scaling Index (SCALE-MCW) ✅
+- [x] AI/ML Token Index (AI-MCW) ✅
+- [x] Gaming/Metaverse Index (GAMING-MCW) ✅
+- [x] DEX Index (DEX-MCW) ✅
+- [x] Yield Index (YIELD-MCW) ✅
+- [x] Data/Oracle Index (DATA-MCW) ✅
 - [ ] RWA (Real World Assets) Index
+- [ ] Meme Index
 
 ### Advanced Features
 - [ ] On-chain verification of index values

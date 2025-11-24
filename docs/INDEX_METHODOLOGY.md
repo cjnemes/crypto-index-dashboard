@@ -4,89 +4,94 @@ This document describes the calculation methodology for the Nemes crypto indexes
 
 ## Overview
 
-All indexes use a **divisor-based methodology** similar to the S&P 500 and Dow Jones Industrial Average. This ensures:
+All indexes use a **divisor-based methodology** similar to the S&P 500 and Dow Jones Industrial Average, combined with **capped market cap weighting** to ensure diversification. This ensures:
 - Consistent, absolute index values (not percentages)
 - Continuity when constituents change
 - Professional-grade index calculation
+- Diversification through 25% constituent weight caps
 
 ## Index Inception
 
 - **Inception Date**: November 25, 2024
 - **Base Value**: 1000 (all indexes start at this value)
-- **Divisors**: Calculated from inception date market data
+- **Divisors**: Calculated from inception date market data using capped weights
+- **Weight Cap**: 25% maximum per constituent (industry standard)
 
 ## Index Types
 
-### Market Cap Weighted (MCW)
+### Capped Market Cap Weighted (MCW)
 
-**Used by**: N100-MCW, DEFI-MCW, INFRA-MCW
+**Used by**: All core and sector indexes (N100-MCW, DEFI-MCW, INFRA-MCW, L1-MCW, etc.)
 
-**Methodology**: Similar to the S&P 500. Larger market cap tokens have proportionally greater influence on the index.
+**Methodology**: Capped market cap weighted, similar to MSCI Capped Indexes and DeFi Pulse Index. Larger market cap tokens have greater influence, but no single constituent can exceed 25% weight.
 
-**Formula**:
-```
-Index Value = Total Market Cap of Constituents / Divisor
+**Weight Capping Algorithm**:
+1. Calculate initial weights from market caps: `Weight = Token Market Cap / Total Market Cap`
+2. Identify constituents exceeding 25% cap
+3. Cap them at 25% and redistribute excess weight proportionally to uncapped constituents
+4. Iterate until all weights ≤ 25% (max 10 iterations)
 
-Where:
-  Divisor = Total Market Cap at Inception / 1000
-```
-
-**Example**:
-- N100-MCW inception total market cap: $677.52B
-- Divisor: $677.52B / 1000 = $677.52M
-- If today's total market cap is $480B:
-  - Index = $480B / $677.52M = 708.5
-
-**Weight Calculation**:
-```
-Token Weight = Token Market Cap / Total Index Market Cap
-```
-
-### Equal Weighted (EW)
-
-**Used by**: N100-EW, DEFI-EW, INFRA-EW
-
-**Methodology**: Similar to the S&P 500 Equal Weight Index. Each token contributes equally to index returns, regardless of market cap.
-
-**Formula**:
+**Index Calculation (Shares-Based)**:
 ```
 At Inception:
-  Shares per Token = (Notional Investment / N) / Token Price
+  1. Calculate capped weights for each constituent
+  2. Using $1M notional: Shares = (Notional × Capped_Weight) / Price
+  3. Divisor = Total_Portfolio_Value / 1000
 
 Daily Calculation:
-  Index Value = Sum(Token Price × Token Shares) / Divisor
+  Index Value = Sum(Shares × Current_Price) / Divisor
 ```
 
-**How it works**:
-1. At inception, allocate equal dollar amounts to each token
-2. Calculate "shares" for each token based on inception price
-3. These shares remain fixed (until rebalancing)
-4. Index value = portfolio value / divisor
+**Example** (simplified 3-token index with 40% cap):
+- Token A: $600B mcap → 60% raw weight → capped to 40%
+- Token B: $300B mcap → 30% raw weight → adjusted to 36%
+- Token C: $100B mcap → 10% raw weight → adjusted to 24%
+- Excess 20% from A redistributed proportionally to B and C
 
-**Example** (3-token index):
-- Inception: $1M notional, 3 tokens
-- Each token gets $333,333
-- Token A at $100: 3,333.33 shares
-- Token B at $50: 6,666.67 shares
-- Token C at $10: 33,333.33 shares
+**Why Capped Weights?**
+- **Diversification**: Prevents single token from dominating index returns
+- **Industry Standard**: DeFi Pulse Index, MSCI, S&P Capped indexes all use this approach
+- **Regulatory Alignment**: SEC RIC rules require max 25% concentration
+- **Risk Management**: Reduces idiosyncratic risk from any single constituent
 
-If prices change to A=$120, B=$45, C=$12:
-- Portfolio = (3,333.33 × $120) + (6,666.67 × $45) + (33,333.33 × $12)
-- Portfolio = $400,000 + $300,000 + $400,000 = $1,100,000
-- Index = $1,100,000 / 1000 = 1100 (10% gain)
+### Equal Weighted (EW) - DEPRECATED
+
+> **Note**: Equal-weighted indexes were deprecated in November 2024 in favor of a MCW-only strategy. All active indexes now use capped market cap weighting.
+
+**Historical Methodology**: Each token contributed equally to index returns, regardless of market cap. Shares were calculated at inception based on equal dollar allocation.
+
+## Current Indexes
+
+### Core Indexes
+
+| Index | Description | Tokens | Methodology |
+|-------|-------------|--------|-------------|
+| N100-MCW | Nemes 100 - Top 100 altcoins | 100 | Capped MCW (25%) |
+| DEFI-MCW | DeFi 25 - Top DeFi protocols | 25 | Capped MCW (25%) |
+| INFRA-MCW | Infra 25 - Infrastructure tokens | 25 | Capped MCW (25%) |
+
+### Sector Sub-Indexes
+
+| Index | Description | Tokens | Parent |
+|-------|-------------|--------|--------|
+| L1-MCW | Layer 1 smart contract platforms | 24 | N100 |
+| SCALE-MCW | L2s + Layer 0 interoperability | 9 | N100 |
+| AI-MCW | AI, GPU, Compute, IoT | 10 | INFRA |
+| GAMING-MCW | Gaming, Metaverse, NFT | 8 | N100 |
+| DEX-MCW | Decentralized Exchanges | 11 | DEFI |
+| YIELD-MCW | Lending, Derivatives, Staking | 11 | DEFI |
+| DATA-MCW | Oracles, Storage, Indexing | 10 | INFRA |
+
+### Benchmarks
+
+| Symbol | Description |
+|--------|-------------|
+| BTC | Bitcoin - primary market benchmark |
+| ETH | Ethereum - smart contract benchmark |
 
 ## Divisors
 
-### Current Divisors (as of inception)
-
-| Index | Divisor | Baseline Market Data |
-|-------|---------|---------------------|
-| N100-MCW | $677.52M | $677.52B total market cap |
-| N100-EW | $1,000 | $1M notional / 100 tokens |
-| DEFI-MCW | $24.64M | $24.64B total market cap |
-| DEFI-EW | $1,000 | $1M notional / 25 tokens |
-| INFRA-MCW | $42.04M | $42.04B total market cap |
-| INFRA-EW | $1,000 | $1M notional / 25 tokens |
+Divisors are calculated at inception using capped weights and a $1M notional investment. The divisor ensures all indexes start at exactly 1000.
 
 ### Divisor Adjustments
 
@@ -135,39 +140,42 @@ BTC and ETH are tracked as benchmarks using raw prices (no divisor calculation).
 | Rebalancing | Quarterly | TBD |
 | Float Adjustment | Yes (IWF) | No (uses full market cap) |
 
-## Future Enhancements
+## Implemented Features
 
-### 1. Quarterly Rebalancing for Equal Weight Indexes
-**Priority**: High | **Complexity**: Medium
+### ✅ Capped Weight Limits (November 2024)
+**Status**: Complete
 
-Equal weight indexes naturally drift away from equal weighting as token prices diverge. Quarterly rebalancing restores equal weights.
+All MCW indexes use 25% weight caps with iterative redistribution. This prevents single token domination and aligns with industry standards (DeFi Pulse Index, MSCI Capped Indexes).
 
-**Implementation**:
-```
-On rebalance date (e.g., 3rd Friday of Mar/Jun/Sep/Dec):
-1. Calculate new equal allocation: Notional / N tokens
-2. Recalculate shares for each token at current price
-3. Adjust divisor to maintain index continuity:
-   New Divisor = Old Divisor × (New Portfolio Value / Old Index Value × Old Divisor)
-```
-
-**Industry Reference**: S&P 500 Equal Weight Index rebalances quarterly.
+**Implementation**: `src/lib/weights.ts` - `calculateMCWWeights()` function with `applyWeightCaps()` algorithm.
 
 ---
 
-### 2. Float-Adjusted Market Cap (IWF)
+### ✅ Sector Sub-Indexes (November 2024)
+**Status**: Complete
+
+Seven sector sub-indexes provide granular exposure to specific market segments:
+- **L1-MCW**: Layer 1 smart contract platforms (24 tokens)
+- **SCALE-MCW**: L2s and interoperability (9 tokens)
+- **AI-MCW**: AI, GPU, Compute, IoT (10 tokens)
+- **GAMING-MCW**: Gaming, Metaverse, NFT (8 tokens)
+- **DEX-MCW**: Decentralized Exchanges (11 tokens)
+- **YIELD-MCW**: Lending, Derivatives, Staking (11 tokens)
+- **DATA-MCW**: Oracles, Storage, Indexing (10 tokens)
+
+**Implementation**: Token definitions in `src/lib/tokens.ts`, index configs in `INDEX_CONFIGS`.
+
+---
+
+## Future Enhancements
+
+### 1. Float-Adjusted Market Cap (IWF)
 **Priority**: Medium | **Complexity**: High
 
-Currently using full circulating supply. Float adjustment excludes tokens held by:
+Currently using full circulating supply. Float adjustment would exclude tokens held by:
 - Founders/team (locked or vesting)
 - Treasury/protocol reserves
 - Major long-term holders (>5% stake)
-
-**Implementation**:
-```
-Investable Weight Factor (IWF) = Float Shares / Total Shares
-Adjusted Market Cap = Price × Circulating Supply × IWF
-```
 
 **Challenge**: Crypto float data is harder to obtain than traditional equities. Would require:
 - Manual research per token
@@ -176,46 +184,22 @@ Adjusted Market Cap = Price × Circulating Supply × IWF
 
 ---
 
-### 3. Capped Weight Limits
-**Priority**: Medium | **Complexity**: Low
+### 2. Quarterly Rebalancing
+**Priority**: Medium | **Complexity**: Medium
 
-Prevent single token domination in MCW indexes. Common cap: 10% or 25%.
+Recalculate capped weights quarterly to account for market cap changes. Currently, shares are fixed at inception.
 
 **Implementation**:
 ```
-If token weight > cap:
-  1. Set token weight = cap
-  2. Redistribute excess weight proportionally to uncapped tokens
-  3. Iterate until all weights ≤ cap
+On rebalance date (e.g., 3rd Friday of Mar/Jun/Sep/Dec):
+1. Recalculate capped weights from current market caps
+2. Calculate new shares based on updated weights
+3. Adjust divisor to maintain index continuity
 ```
 
-**Example**: If XRP reaches 15% weight with a 10% cap:
-- Cap XRP at 10%
-- Redistribute 5% to other tokens proportionally
-
-**Industry Reference**: MSCI Capped Indexes use 25% caps.
-
 ---
 
-### 4. Sector Sub-Indexes
-**Priority**: Low | **Complexity**: Medium
-
-Create specialized indexes beyond DeFi and Infra:
-
-| Sector | Examples | Token Count |
-|--------|----------|-------------|
-| Layer 1s | SOL, AVAX, NEAR, SUI | 10-15 |
-| Layer 2s | ARB, OP, MATIC, BASE | 10 |
-| AI/Compute | RNDR, FET, AGIX, TAO | 10-15 |
-| Gaming/Metaverse | AXS, SAND, MANA, IMX | 10-15 |
-| Memecoins | DOGE, SHIB, PEPE, WIF | 10 |
-| RWA | ONDO, MKR, PENDLE | 5-10 |
-
-**Implementation**: Add new IndexConfig entries with sector-specific token lists.
-
----
-
-### 5. Real-Time Index Updates
+### 3. Real-Time Index Updates
 **Priority**: Low | **Complexity**: High
 
 Current: Daily snapshots at 12:00 UTC
@@ -229,7 +213,7 @@ Enhanced: Real-time or 5-minute updates
 
 ---
 
-### 6. Automated Constituent Selection
+### 4. Automated Constituent Selection
 **Priority**: Low | **Complexity**: High
 
 Currently: Fixed token lists defined in code
@@ -239,25 +223,15 @@ Enhanced: Automatic quarterly reconstitution based on:
 - Exchange listing requirements
 - Sector classification
 
-**Implementation**:
-```
-Quarterly Selection Process:
-1. Fetch top 150 tokens by market cap
-2. Apply exclusion rules (forks, stablecoins, wrapped tokens)
-3. Apply liquidity filter (min $10M daily volume)
-4. Select top 100 for N100, top 25 per sector for DEFI/INFRA
-5. Adjust divisors for any constituent changes
-```
-
 ---
 
 ## Implementation Roadmap
 
-| Phase | Enhancement | Est. Effort |
-|-------|-------------|-------------|
-| 1 | Quarterly EW Rebalancing | 2-3 days |
-| 2 | Capped Weight Limits | 1-2 days |
-| 3 | Sector Sub-Indexes | 3-5 days |
-| 4 | Float-Adjusted MCW | 1-2 weeks |
-| 5 | Automated Reconstitution | 1-2 weeks |
-| 6 | Real-Time Updates | 2-4 weeks |
+| Phase | Enhancement | Status |
+|-------|-------------|--------|
+| 1 | Capped Weight Limits (25%) | ✅ Complete |
+| 2 | Sector Sub-Indexes | ✅ Complete |
+| 3 | Quarterly Rebalancing | 🔜 Planned |
+| 4 | Float-Adjusted MCW | 📋 Backlog |
+| 5 | Automated Reconstitution | 📋 Backlog |
+| 6 | Real-Time Updates | 📋 Backlog |
